@@ -1,0 +1,40 @@
+{
+  "name": "magapp",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsc && node dist/server.js",
+    "dev": "nodemon",
+    "build": "rimraf ./dist && tsc",
+    "start:prod": "cross-env NODE_ENV=production pnpm run start",
+    "db:migrate:dev": "pnpm prisma migrate dev",
+    "db:generate": "pnpm prisma generate",
+    "db:pull": "pnpm prisma db pull",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@prisma/client": "6.5.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "serverless-http": "^3.2.0",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.1",
+    "@types/morgan": "^1.9.9",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "morgan": "^1.10.0",
+    "nodemon": "^3.1.9",
+    "prisma": "^6.5.0",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}
