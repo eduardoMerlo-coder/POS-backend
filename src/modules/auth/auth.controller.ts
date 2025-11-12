@@ -6,20 +6,32 @@ import { loginDTO } from "./services/auth.schema";
 export class AuthController {
   constructor(private readonly authService: AuthService = new AuthService()) {}
 
+  private setRefreshCookie(res: Response, token: string, origin?: string) {
+    const isLocal = origin?.includes("localhost");
+
+    res.cookie("refreshToken", token, {
+      httpOnly: true,
+      secure: !isLocal, // HTTPS solo en producción
+      sameSite: isLocal ? "lax" : "none", // permite cross-site cookies
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
+    });
+  }
+
+  private clearRefreshCookie(res: Response, origin?: string) {
+    const isLocal = origin?.includes("localhost");
+
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: !isLocal,
+      sameSite: isLocal ? "lax" : "none",
+    });
+  }
+
   async login(req: Request, res: Response) {
     try {
       const { name, password } = req.body as loginDTO;
       const auth = await this.authService.login({ name, password });
-
-      // Set refresh token in HttpOnly cookie
-      res.cookie("refreshToken", auth.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
-
-      // Remove refresh token from response body
+      this.setRefreshCookie(res, auth.refreshToken, req.headers.origin);
       const { refreshToken, ...responseData } = auth;
       HttpResponse.Ok(res, responseData);
     } catch (err) {
@@ -36,16 +48,7 @@ export class AuthController {
       }
 
       const auth = await this.authService.refresh({ refreshToken });
-
-      // Set new refresh token in HttpOnly cookie
-      res.cookie("refreshToken", auth.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
-
-      // Remove refresh token from response body
+      this.setRefreshCookie(res, auth.refreshToken, req.headers.origin);
       const { refreshToken: _, ...responseData } = auth;
       HttpResponse.Ok(res, responseData);
     } catch (err) {
@@ -60,13 +63,7 @@ export class AuthController {
       }
 
       const responseData = await this.authService.logout({ refreshToken });
-
-      res.clearCookie("refreshToken", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      });
-
+      this.clearRefreshCookie(res, req.headers.origin);
       HttpResponse.Ok(res, responseData);
     } catch (err) {
       HttpResponse.BadRequest(res, err);
