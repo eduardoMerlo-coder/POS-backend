@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "tsc && node dist/server.js",
+    "start": "tsc && node dist/src/server.js",
     "dev": "nodemon",
     "build": "rimraf ./dist && prisma generate && tsc",
-    "start:prod": "node dist/server.js",
+    "start:prod": "node dist/src/server.js",
     "migrate:deploy": "prisma migrate deploy",
     "postinstall": "prisma generate",
     "db:migrate:dev": "pnpm prisma migrate dev",
@@ -26,6 +26,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
+    "module-alias": "^2.2.3",
     "morgan": "^1.10.0",
     "zod": "^3.24.4"
   },
@@ -41,5 +42,8 @@
     "rimraf": "^6.0.1",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
+  },
+  "_moduleAliases": {
+    "@": "dist/src"
   }
 }
