@@ -1,11 +1,17 @@
 import { prisma } from "@/data/postgres";
-import { Product, ProductVariant } from "@prisma/client";
+import { Product, ProductVariant, PrismaClient } from "@prisma/client";
 import {
   CreateProductVariantDto,
   CreateBaseProductDto,
 } from "../product.schema";
 import { UomService } from "@/modules/uom/services/uom.service";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+
+// Tipo helper para transacciones de Prisma
+type PrismaTransaction = Omit<
+  PrismaClient,
+  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
+>;
 
 export class ProductService {
   constructor(private readonly uomService: UomService = new UomService()) {}
@@ -24,7 +30,7 @@ export class ProductService {
         businessTypes,
       } = data;
 
-      return await prisma.$transaction(async (tx) => {
+      return await prisma.$transaction(async (tx: PrismaTransaction) => {
         // 1️⃣ Validar que el producto no exista
         const existingProduct = await tx.product.findFirst({
           where: {
@@ -175,7 +181,7 @@ export class ProductService {
     }
   ) {
     try {
-      return await prisma.$transaction(async (tx) => {
+      return await prisma.$transaction(async (tx: PrismaTransaction) => {
         let updatedProduct;
         let updatedVariant;
 
