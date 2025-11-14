@@ -28,13 +28,14 @@ model User {
   roleId         Int
 
   businessType BusinessType? @relation(fields: [businessTypeId], references: [id], onDelete: SetNull)
-  role         Role         @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  role         Role          @relation(fields: [roleId], references: [id], onDelete: Restrict)
 
   refreshTokens      RefreshToken[]
   userVariants       UserProductVariant[]
   inventoryMovements InventoryMovement[]
   inventoryBatches   InventoryBatch[]
 }
+
 model BusinessType {
   id           Int                   @id @default(autoincrement())
   name         String                @unique
@@ -87,6 +88,7 @@ model ProductVariant {
   productId          Int                  @map("product_id")
   quantityPerPackage Int                  @map("quantity_per_package")
   product            Product              @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  status             ProductStatus        @default(ACTIVE)
   userVariants       UserProductVariant[]
   inventoryMovements InventoryMovement[]
   images             ProductImage[]
@@ -112,26 +114,24 @@ model Product {
   internalCode      String?               @db.VarChar(20)
   name              String                @db.VarChar(100)
   brand             String                @db.VarChar(300)
-  packagingTypeId     Int                
+  packagingTypeId   Int
   capacity          Decimal               @db.Decimal(10, 2)
   unitId            Int                   @map("unit_id")
-  status            ProductStatus         @default(ACTIVE)
   unitOfMeasure     UnitOfMeasure         @relation(fields: [unitId], references: [id], onDelete: Restrict, onUpdate: NoAction)
   packagingType     PackagingType         @relation(fields: [packagingTypeId], references: [id], onDelete: Restrict, onUpdate: NoAction)
   productCategories ProductCategory[]
   productVariants   ProductVariant[]
-  businessLinks     ProductBusinessType[]  
+  businessLinks     ProductBusinessType[]
 
   @@unique([barcode, internalCode])
 }
 
-
 model PackagingType {
-  id  Int @id @default(autoincrement())
-  name String @db.VarChar(100)
+  id          Int    @id @default(autoincrement())
+  name        String @db.VarChar(100)
   description String @db.VarChar(100)
 
-  products    Product[]
+  products Product[]
 }
 
 model InventoryBatch {

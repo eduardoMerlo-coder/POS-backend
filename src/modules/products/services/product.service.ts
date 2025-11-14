@@ -334,4 +334,21 @@ export class ProductService {
       throw error;
     }
   }
+
+  //CATALOG
+  async getAllPackagingType() {
+    try {
+      return await prisma.packagingType.findMany();
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getAllCategories() {
+    try {
+      return await prisma.category.findMany();
+    } catch (error) {
+      throw error;
+    }
+  }
 }

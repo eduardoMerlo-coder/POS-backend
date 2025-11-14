@@ -102,4 +102,23 @@ export class ProductController {
       HttpResponse.BadRequest(res, error);
     }
   };
+
+  // CATALOG
+
+  public getAllPackagingType = async (req: Request, res: Response) => {
+    try {
+      const listPackagingType = await this.productService.getAllPackagingType();
+      HttpResponse.Ok(res, listPackagingType);
+    } catch (error: any) {
+      HttpResponse.BadRequest(res, error);
+    }
+  };
+  public getAllCategories = async (req: Request, res: Response) => {
+    try {
+      const listPackagingType = await this.productService.getAllCategories();
+      HttpResponse.Ok(res, listPackagingType);
+    } catch (error: any) {
+      HttpResponse.BadRequest(res, error);
+    }
+  };
 }

@@ -15,7 +15,7 @@ export const createBaseProductSchema = z.object({
   packaging_type: z.object({
     id: z.number(),
     name: z.string(),
-    description: z.string(),
+    description: z.string().transform((val) => val.toLowerCase()),
   }),
 
   capacity: z.number().positive(),
