@@ -49,6 +49,16 @@ export class ProductService {
         // 2️⃣ Buscar o crear unidad de medida (findOrCreate)
         const uom = await this.uomService.findOrCreateUom(unit);
 
+        // Crear packaging si no existe
+        const packaging = await tx.packagingType.upsert({
+          where: { id: packaging_type.id },
+          update: {},
+          create: {
+            name: packaging_type.name,
+            description: packaging_type.description,
+          },
+        });
+
         // 3️⃣ Crear producto principal
         const newProduct = await tx.product.create({
           data: {
@@ -56,7 +66,6 @@ export class ProductService {
             internalCode: internal_code,
             name,
             brand,
-            packagingType: packaging_type,
             capacity,
             unitId: uom.id,
             businessLinks: {
@@ -64,6 +73,7 @@ export class ProductService {
                 businessType: { connect: { id: btId } },
               })),
             },
+            packagingTypeId: packaging.id,
             productCategories: {
               create: categories.map((categoryName) => ({
                 category: {

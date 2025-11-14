@@ -24,7 +24,8 @@ class MainServer extends BaseConfig {
     this.app.use(morgan("dev"));
 
     const corsOptions = {
-      origin: process.env.ALLOWED_ORIGINS?.split(",") || "*", // Dominios permitidos, usa '*' para todos o configura específicos en .env
+      origin:
+        process.env.ALLOWED_ORIGINS?.split(",") || "http://localhost:5173", // Dominios permitidos, usa '*' para todos o configura específicos en .env
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization"],
       credentials: true, // Permite enviar cookies de autenticación cross-origin

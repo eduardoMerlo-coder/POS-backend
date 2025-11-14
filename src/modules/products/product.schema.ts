@@ -12,10 +12,11 @@ export const createBaseProductSchema = z.object({
     .string()
     .trim()
     .transform((val) => val.toLowerCase()),
-  packaging_type: z
-    .string()
-    .trim()
-    .transform((val) => val.toLowerCase()),
+  packaging_type: z.object({
+    id: z.number(),
+    name: z.string(),
+    description: z.string(),
+  }),
 
   capacity: z.number().positive(),
   unit: z.string().trim().toLowerCase(),
