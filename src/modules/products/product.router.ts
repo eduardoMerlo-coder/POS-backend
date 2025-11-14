@@ -41,10 +41,10 @@ export class ProductRouter extends BaseRouter<ProductController> {
     );
     // CATALOG ENDPOINTS
 
-    this.router.get("/product/packaging-type", (req, res) =>
+    this.router.get("/packaging-type", (req, res) =>
       this.controller.getAllPackagingType(req, res)
     );
-    this.router.get("/product/category", (req, res) =>
+    this.router.get("/category", (req, res) =>
       this.controller.getAllCategories(req, res)
     );
   }
