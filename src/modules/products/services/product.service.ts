@@ -23,15 +23,14 @@ export class ProductService {
         internal_code = "",
         name,
         brand,
-        packaging_type,
+        packaging_type_id,
         capacity,
-        unit,
+        unit_id,
         categories,
-        businessTypes,
+        business_types,
       } = data;
 
       return await prisma.$transaction(async (tx: PrismaTransaction) => {
-        // 1️⃣ Validar que el producto no exista
         const existingProduct = await tx.product.findFirst({
           where: {
             barcode,
@@ -46,20 +45,6 @@ export class ProductService {
           };
         }
 
-        // 2️⃣ Buscar o crear unidad de medida (findOrCreate)
-        const uom = await this.uomService.findOrCreateUom(unit);
-
-        // Crear packaging si no existe
-        const packaging = await tx.packagingType.upsert({
-          where: { id: packaging_type.id },
-          update: {},
-          create: {
-            name: packaging_type.name,
-            description: packaging_type.description,
-          },
-        });
-
-        // 3️⃣ Crear producto principal
         const newProduct = await tx.product.create({
           data: {
             barcode,
@@ -67,13 +52,13 @@ export class ProductService {
             name,
             brand,
             capacity,
-            unitId: uom.id,
+            unitId: unit_id,
             businessLinks: {
-              create: businessTypes.map((btId) => ({
+              create: business_types.map((btId) => ({
                 businessType: { connect: { id: btId } },
               })),
             },
-            packagingTypeId: packaging.id,
+            packagingTypeId: packaging_type_id,
             productCategories: {
               create: categories.map((categoryName) => ({
                 category: {

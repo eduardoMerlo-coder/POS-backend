@@ -12,21 +12,16 @@ export const createBaseProductSchema = z.object({
     .string()
     .trim()
     .transform((val) => val.toLowerCase()),
-  packaging_type: z.object({
-    id: z.number(),
-    name: z.string(),
-    description: z.string().transform((val) => val.toLowerCase()),
-  }),
-
+  packaging_type_id: z.number().positive(),
   capacity: z.number().positive(),
-  unit: z.string().trim().toLowerCase(),
+  unit_id: z.number().positive(),
   categories: z.array(
     z
       .string()
       .trim()
       .transform((val) => val.toLowerCase())
   ),
-  businessTypes: z.number().positive().array(),
+  business_types: z.number().positive().array(),
 });
 
 export const createProductVariantSchema = z.object({
