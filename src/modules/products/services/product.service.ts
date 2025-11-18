@@ -6,6 +6,7 @@ import {
 } from "../product.schema";
 import { UomService } from "@/modules/uom/services/uom.service";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { CreateBrandDto } from "../catalog.schema";
 
 // Tipo helper para transacciones de Prisma
 type PrismaTransaction = Omit<
@@ -22,7 +23,7 @@ export class ProductService {
         barcode,
         internal_code = "",
         name,
-        brand,
+        brand_id,
         packaging_type_id,
         capacity,
         unit_id,
@@ -50,7 +51,7 @@ export class ProductService {
             barcode,
             internalCode: internal_code,
             name,
-            brand,
+            brandId: brand_id,
             capacity,
             unitId: unit_id,
             businessLinks: {
@@ -332,6 +333,20 @@ export class ProductService {
   async getAllCategories() {
     try {
       return await prisma.category.findMany();
+    } catch (error) {
+      throw error;
+    }
+  }
+  async getBrands() {
+    try {
+      return await prisma.brand.findMany();
+    } catch (error) {
+      throw error;
+    }
+  }
+  async createBrand({ name }: CreateBrandDto) {
+    try {
+      return await prisma.brand.create({ data: { name } });
     } catch (error) {
       throw error;
     }

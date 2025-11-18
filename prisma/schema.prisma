@@ -113,17 +113,24 @@ model Product {
   barcode           String?               @db.VarChar(20)
   internalCode      String?               @db.VarChar(20)
   name              String                @db.VarChar(100)
-  brand             String                @db.VarChar(300)
+  brandId           Int?
   packagingTypeId   Int
   capacity          Decimal               @db.Decimal(10, 2)
   unitId            Int                   @map("unit_id")
   unitOfMeasure     UnitOfMeasure         @relation(fields: [unitId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  brand             Brand?                 @relation(fields: [brandId], references: [id], onDelete: Restrict, onUpdate: NoAction)
   packagingType     PackagingType         @relation(fields: [packagingTypeId], references: [id], onDelete: Restrict, onUpdate: NoAction)
   productCategories ProductCategory[]
   productVariants   ProductVariant[]
   businessLinks     ProductBusinessType[]
 
   @@unique([barcode, internalCode])
+}
+
+model Brand {
+  id       Int       @id @default(autoincrement())
+  name     String    @db.VarChar(300)
+  products Product[]
 }
 
 model PackagingType {

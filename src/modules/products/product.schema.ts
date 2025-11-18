@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-// Esquema para la creación de Producto
 export const createBaseProductSchema = z.object({
   barcode: z.string().trim(),
   internal_code: z.string().trim(),
@@ -8,10 +7,7 @@ export const createBaseProductSchema = z.object({
     .string()
     .trim()
     .transform((val) => val.toLowerCase()),
-  brand: z
-    .string()
-    .trim()
-    .transform((val) => val.toLowerCase()),
+  brand_id: z.number().positive(),
   packaging_type_id: z.number().positive(),
   capacity: z.number().positive(),
   unit_id: z.number().positive(),
@@ -32,7 +28,6 @@ export const createProductVariantSchema = z.object({
   stockQuantity: z.number().positive(),
 });
 
-// Esquema para actualización de producto
 export const updateProductSchema = z.object({
   product: z
     .object({

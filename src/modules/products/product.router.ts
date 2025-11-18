@@ -47,5 +47,11 @@ export class ProductRouter extends BaseRouter<ProductController> {
     this.router.get("/category", (req, res) =>
       this.controller.getAllCategories(req, res)
     );
+    this.router.get("/brand", (req, res) =>
+      this.controller.getBrands(req, res)
+    );
+    this.router.post("/brand", (req, res) =>
+      this.controller.createBrand(req, res)
+    );
   }
 }

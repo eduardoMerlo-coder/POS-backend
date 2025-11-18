@@ -5,6 +5,7 @@ import {
   CreateBaseProductDto,
   CreateProductVariantDto,
 } from "./product.schema";
+import { CreateBrandDto } from "./catalog.schema";
 
 export class ProductController {
   constructor(
@@ -117,6 +118,25 @@ export class ProductController {
     try {
       const categories = await this.productService.getAllCategories();
       HttpResponse.Ok(res, categories);
+    } catch (error: any) {
+      HttpResponse.BadRequest(res, error);
+    }
+  };
+  public getBrands = async (req: Request, res: Response) => {
+    try {
+      const brands = await this.productService.getBrands();
+      HttpResponse.Ok(res, brands);
+    } catch (error: any) {
+      HttpResponse.BadRequest(res, error);
+    }
+  };
+  public createBrand = async (req: Request, res: Response) => {
+    const { name } = req.body as CreateBrandDto;
+    try {
+      const newBrand = await this.productService.createBrand({
+        name,
+      });
+      HttpResponse.Ok(res, newBrand);
     } catch (error: any) {
       HttpResponse.BadRequest(res, error);
     }
