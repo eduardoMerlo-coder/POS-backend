@@ -129,7 +129,7 @@ model Product {
 
 model Brand {
   id       Int       @id @default(autoincrement())
-  name     String    @db.VarChar(300)
+  name     String    @unique @db.VarChar(300)
   products Product[]
 }
 
