@@ -61,12 +61,9 @@ export class ProductService {
             },
             packagingTypeId: packaging_type_id,
             productCategories: {
-              create: categories.map((categoryName) => ({
+              create: categories.map((id) => ({
                 category: {
-                  connectOrCreate: {
-                    where: { name: categoryName.toLowerCase() },
-                    create: { name: categoryName.toLowerCase() },
-                  },
+                  connect: { id },
                 },
               })),
             },

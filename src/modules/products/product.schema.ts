@@ -11,12 +11,7 @@ export const createBaseProductSchema = z.object({
   packaging_type_id: z.number().positive(),
   capacity: z.number().positive(),
   unit_id: z.number().positive(),
-  categories: z.array(
-    z
-      .string()
-      .trim()
-      .transform((val) => val.toLowerCase())
-  ),
+  categories: z.array(z.number().positive()),
   business_types: z.number().positive().array(),
 });
 
