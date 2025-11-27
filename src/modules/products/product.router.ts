@@ -17,6 +17,9 @@ export class ProductRouter extends BaseRouter<ProductController> {
     this.router.get("/products-user", (req, res) =>
       this.controller.getProductsByUser(req, res)
     );
+    this.router.get("/product-base/:id", (req, res) =>
+      this.controller.getBaseProduct(req, res)
+    );
     this.router.post(
       "/product-base",
       validateSchema(createBaseProductSchema),

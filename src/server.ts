@@ -1,9 +1,13 @@
-import "module-alias/register";
+import "./env";
+
+// Only register module-alias in production (when running compiled JS)
+if (process.env.NODE_ENV === 'production' || !__filename.endsWith('.ts')) {
+  require('module-alias/register');
+}
 
 import express, { Router } from "express";
 import morgan from "morgan";
 import cors from "cors";
-import cookieParser from "cookie-parser";
 import { ProductRouter } from "./modules/products/product.router";
 import { BaseConfig } from "./config/config";
 import { UomRouter } from "./modules/uom/uom.router";
@@ -35,7 +39,7 @@ class MainServer extends BaseConfig {
 
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
-    this.app.use(cookieParser());
+    //this.app.use(cookieParser());
     this.setupRoutes();
   }
 

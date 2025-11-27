@@ -10,7 +10,7 @@ import { CreateBrandDto } from "./catalog.schema";
 export class ProductController {
   constructor(
     private readonly productService: ProductService = new ProductService()
-  ) {}
+  ) { }
 
   public createBaseProduct = async (req: Request, res: Response) => {
     const productData = req.body as CreateBaseProductDto;
@@ -34,8 +34,11 @@ export class ProductController {
     }
   };
   public getBaseProducts = async (req: Request, res: Response) => {
+    const page = parseInt(req.query.page as string) || 1;
+    const per_page = parseInt(req.query.per_page as string) || 10;
+    const search_term = req.query.searchTerm as string;
     try {
-      const products = await this.productService.getAllBaseProducts();
+      const products = await this.productService.getAllBaseProducts(page, per_page, search_term);
       HttpResponse.Ok(res, products);
     } catch (error: any) {
       HttpResponse.BadRequest(res, error);
@@ -98,6 +101,16 @@ export class ProductController {
     const id = parseInt(req.params.id);
     try {
       const product = await this.productService.deleteProduct(id);
+      HttpResponse.Ok(res, product);
+    } catch (error: any) {
+      HttpResponse.BadRequest(res, error);
+    }
+  };
+
+  public getBaseProduct = async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id);
+    try {
+      const product = await this.productService.getBaseProduct(id);
       HttpResponse.Ok(res, product);
     } catch (error: any) {
       HttpResponse.BadRequest(res, error);

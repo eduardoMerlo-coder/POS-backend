@@ -1,51 +1,34 @@
-import { prisma } from "@/data/postgres";
-import { UnitOfMeasure } from "@prisma/client";
+import { supabase } from "@/lib/supabase";
 
 export class UomService {
   async createUom(data: any) {
-    const uom = await prisma.unitOfMeasure.create({
-      data,
-    });
-    return uom;
-  }
-  async findOrCreateUom(unit: string): Promise<UnitOfMeasure> {
-    try {
-      // Intentar encontrar la unidad de medida existente
-      const existingUom = await prisma.unitOfMeasure.findUnique({
-        where: { unit },
-      });
-
-      if (existingUom) {
-        return existingUom;
-      }
-
-      return await this.createUom({ unit });
-    } catch (error: any) {
-      throw error;
-    }
+    const { data: newUom, error } = await supabase.from("unit_of_measure").insert(
+      data
+    );
+    if (error) throw error;
+    return newUom;
   }
   async updateUom(id: number, data: any) {
-    const uom = await prisma.unitOfMeasure.update({
-      where: { id },
-      data,
-    });
-    return uom;
+    const { data: updatedUom, error } = await supabase.from("unit_of_measure").update(
+      data
+    ).eq("id", id);
+    if (error) throw error;
+    return updatedUom;
   }
   async deleteUom(id: number) {
-    const uom = await prisma.unitOfMeasure.delete({
-      where: { id },
-    });
-    return uom;
+    const { data: deletedUom, error } = await supabase.from("unit_of_measure").delete().eq("id", id);
+    if (error) throw error;
+    return deletedUom;
   }
   async getUom(id: number) {
-    const uom = await prisma.unitOfMeasure.findUnique({
-      where: { id },
-    });
+    const { data: uom, error } = await supabase.from("unit_of_measure").select("*").eq("id", id);
+    if (error) throw error;
     return uom;
   }
 
   async getAllUoms() {
-    const uoms = await prisma.unitOfMeasure.findMany();
+    const { data: uoms, error } = await supabase.from("unit_of_measure").select("*");
+    if (error) throw error;
     return uoms;
   }
 }

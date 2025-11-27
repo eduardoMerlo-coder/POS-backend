@@ -1,8 +1,9 @@
 import z from "zod";
 
-export const loginSchema = z.object({
-  name: z.string().trim().min(1, "Name is required"),
-  password: z.string().trim().min(1, "Password is required"),
+export const createUserSchema = z.object({
+  email: z.string().trim().min(1, "Email is required"),
+  password: z.string().trim().min(6, "Password is required"),
+  role_id: z.number().positive(),
 });
 
-export type loginDTO = z.infer<typeof loginSchema>;
+export type createUserDTO = z.infer<typeof createUserSchema>;
