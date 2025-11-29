@@ -18,7 +18,7 @@ export class ProductRouter extends BaseRouter<ProductController> {
       this.controller.getProductsByUser(req, res)
     );
     this.router.get("/product-base/:id", (req, res) =>
-      this.controller.getBaseProduct(req, res)
+      this.controller.getBaseProductById(req, res)
     );
     this.router.post(
       "/product-base",

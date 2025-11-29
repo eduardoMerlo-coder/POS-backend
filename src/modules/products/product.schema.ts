@@ -13,14 +13,15 @@ export const createBaseProductSchema = z.object({
   unit_id: z.number().positive(),
   categories: z.array(z.number().positive()),
   business_types: z.number().positive().array(),
+  quantity_per_package: z.number().positive(),
 });
 
-export const createProductVariantSchema = z.object({
-  productId: z.number().positive(),
-  userId: z.number().positive(),
-  quantityPerPackage: z.number().positive(),
+export const createProductVariantSchema = createBaseProductSchema.extend({
+  user_id: z.number().positive(),
   price: z.number().positive(),
-  stockQuantity: z.number().positive(),
+  stock_quantity: z.number().positive(),
+  min_stock: z.number().positive(),
+  status: z.enum(["active", "inactive"]),
 });
 
 export const updateProductSchema = z.object({

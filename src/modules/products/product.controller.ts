@@ -107,10 +107,10 @@ export class ProductController {
     }
   };
 
-  public getBaseProduct = async (req: Request, res: Response) => {
+  public getBaseProductById = async (req: Request, res: Response) => {
     const id = parseInt(req.params.id);
     try {
-      const product = await this.productService.getBaseProduct(id);
+      const product = await this.productService.getBaseProductById(id);
       HttpResponse.Ok(res, product);
     } catch (error: any) {
       HttpResponse.BadRequest(res, error);
