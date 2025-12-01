@@ -17,11 +17,11 @@ export const createBaseProductSchema = z.object({
 });
 
 export const createProductVariantSchema = createBaseProductSchema.extend({
-  user_id: z.number().positive(),
+  user_id: z.string().uuid(),
   price: z.number().positive(),
-  stock_quantity: z.number().positive(),
+  stock_quantity: z.number().nonnegative(),
   min_stock: z.number().positive(),
-  status: z.enum(["active", "inactive"]),
+  status: z.enum(["ACTIVE", "INACTIVE"]),
 });
 
 export const updateProductSchema = z.object({

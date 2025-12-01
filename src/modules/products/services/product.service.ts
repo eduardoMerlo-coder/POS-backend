@@ -8,78 +8,32 @@ import { supabase } from "@/lib/supabase";
 
 export class ProductService {
   async createBaseProduct(data: CreateBaseProductDto) {
-    const {
-      barcode,
-      internal_code = "",
-      name,
-      brand_id,
-      packaging_type_id,
-      capacity,
-      unit_id,
-      categories,
-      business_types,
-      quantityPerPackage,
-    } = data;
-
-
-    const existingProduct = await supabase.from("product").select("id").eq("barcode", barcode).eq("internal_code", internal_code).maybeSingle()
-    if (existingProduct.data) {
-      throw {
-        status: 409,
-        message: `Ya existe un producto con el mismo código de barras.`,
-      };
-    }
-    const { data: newProduct, error } = await supabase.rpc("create_base_product", {
-      barcode,
-      internal_code,
-      name,
-      brand_id,
-      packaging_type_id,
-      capacity,
-      unit_id,
-      categories,
-      business_types,
-      quantityPerPackage
-    })
+    const { data: newProduct, error } = await supabase.rpc('create_base_product', data)
     if (error) throw error;
     return newProduct
   }
 
   async createProductVariant(data: CreateProductVariantDto) {
-    let newProduct;
-    const existingProduct = await supabase.from("product").select("id").eq("barcode", data.barcode).eq("internal_code", data.internal_code).maybeSingle()
-    if (!existingProduct.data) {
-      const newBaseProduct = await this.createBaseProduct({
-        barcode: data.barcode,
-        internal_code: data.internal_code,
-        name: data.name,
-        brand_id: data.brand_id,
-        packaging_type_id: data.packaging_type_id,
-        capacity: data.capacity,
-        unit_id: data.unit_id,
-        categories: data.categories,
-        business_types: data.business_types,
-        quantityPerPackage: data.quantityPerPackage,
-      })
-      newProduct = newBaseProduct.data
-    } else {
-      newProduct = existingProduct.data
-    }
-    const { data: newVariant, error } = await supabase.from("product_variant").insert({
-      product_id: newProduct.id,
-      status: data.status
-    }).select("*").single()
+    console.log("llega")
+    const { data: newProduct, error } = await supabase.rpc('create_product_with_variant', {
+      e_barcode: data.barcode,
+      e_internal_code: data.internal_code,
+      e_name: data.name,
+      e_brand_id: data.brand_id,
+      e_packaging_type_id: data.packaging_type_id,
+      e_capacity: data.capacity,
+      e_unit_id: data.unit_id,
+      e_categories: data.categories,
+      e_business_types: data.business_types,
+      e_quantity_per_package: data.quantity_per_package,
+      e_user_id: data.user_id,
+      e_price: data.price,
+      e_stock_quantity: data.stock_quantity,
+      e_min_stock: data.min_stock,
+      e_status: data.status
+    })
     if (error) throw error;
-
-    const { error: userProductVariantError } = await supabase.from("user_product_variant").insert({
-      user_id: data.userId,
-      variant_id: newVariant.id,
-      price: data.price,
-      stock_quantity: data.stock_quantity,
-      min_stock: data.min_stock,
-    }).select("*").single()
-    if (userProductVariantError) throw userProductVariantError;
-    return newVariant
+    return newProduct
   }
   async getProductsByUser(userId: number) {
     try {
