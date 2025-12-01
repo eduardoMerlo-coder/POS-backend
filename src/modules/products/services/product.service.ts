@@ -14,7 +14,6 @@ export class ProductService {
   }
 
   async createProductVariant(data: CreateProductVariantDto) {
-    console.log("llega")
     const { data: newProduct, error } = await supabase.rpc('create_product_with_variant', {
       e_barcode: data.barcode,
       e_internal_code: data.internal_code,
