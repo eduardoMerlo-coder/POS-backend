@@ -20,6 +20,9 @@ export class ProductRouter extends BaseRouter<ProductController> {
     this.router.get("/product-base/:id", (req, res) =>
       this.controller.getBaseProductById(req, res)
     );
+    this.router.get("/product-base/:id/variants", (req, res) =>
+      this.controller.getVariantsByProductId(req, res)
+    );
     this.router.post(
       "/product-base",
       validateSchema(createBaseProductSchema),
@@ -44,9 +47,6 @@ export class ProductRouter extends BaseRouter<ProductController> {
     );
     // CATALOG ENDPOINTS
 
-    this.router.get("/packaging-type", (req, res) =>
-      this.controller.getAllPackagingType(req, res)
-    );
     this.router.get("/category", (req, res) =>
       this.controller.getAllCategories(req, res)
     );

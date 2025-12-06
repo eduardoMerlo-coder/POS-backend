@@ -8,7 +8,6 @@ export const createBaseProductSchema = z.object({
     .trim()
     .transform((val) => val.toLowerCase()),
   brand_id: z.number().positive(),
-  packaging_type_id: z.number().positive(),
   capacity: z.number().positive(),
   unit_id: z.number().positive(),
   categories: z.array(z.number().positive()),
@@ -34,11 +33,6 @@ export const updateProductSchema = z.object({
         .transform((val) => val.toLowerCase())
         .optional(),
       brand: z
-        .string()
-        .trim()
-        .transform((val) => val.toLowerCase())
-        .optional(),
-      packagingType: z
         .string()
         .trim()
         .transform((val) => val.toLowerCase())

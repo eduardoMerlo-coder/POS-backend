@@ -10,7 +10,7 @@ import { CreateBrandDto } from "./catalog.schema";
 export class ProductController {
   constructor(
     private readonly productService: ProductService = new ProductService()
-  ) { }
+  ) {}
 
   public createBaseProduct = async (req: Request, res: Response) => {
     const productData = req.body as CreateBaseProductDto;
@@ -35,10 +35,18 @@ export class ProductController {
   };
   public getBaseProducts = async (req: Request, res: Response) => {
     const page = parseInt(req.query.page as string) || 1;
-    const per_page = parseInt(req.query.per_page as string) || 10;
-    const search_term = req.query.searchTerm as string;
+    const per_page = parseInt(req.query.per_page as string) || 20;
+    const searchTerm = req.query.searchTerm as string;
+    const sort = (req.query.sort as string) || "name";
+    const order = (req.query.order as string) || "asc";
     try {
-      const products = await this.productService.getAllBaseProducts(page, per_page, search_term);
+      const products = await this.productService.getAllBaseProducts(
+        page,
+        per_page,
+        searchTerm,
+        sort,
+        order
+      );
       HttpResponse.Ok(res, products);
     } catch (error: any) {
       HttpResponse.BadRequest(res, error);
@@ -117,16 +125,20 @@ export class ProductController {
     }
   };
 
-  // CATALOG
-
-  public getAllPackagingType = async (req: Request, res: Response) => {
+  public getVariantsByProductId = async (req: Request, res: Response) => {
+    const productId = parseInt(req.params.id);
     try {
-      const packagingTypes = await this.productService.getAllPackagingType();
-      HttpResponse.Ok(res, packagingTypes);
+      const variants = await this.productService.getVariantsByProductId(
+        productId
+      );
+      HttpResponse.Ok(res, variants);
     } catch (error: any) {
       HttpResponse.BadRequest(res, error);
     }
   };
+
+  // CATALOG
+
   public getAllCategories = async (req: Request, res: Response) => {
     try {
       const categories = await this.productService.getAllCategories();
