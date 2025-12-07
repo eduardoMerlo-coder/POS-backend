@@ -1,33 +1,79 @@
 import {
   CreateProductVariantDto,
   CreateBaseProductDto,
+  CreateUserProductVariantDto,
+  CreateProductVariantWithUserDto,
 } from "../product.schema";
 import { CreateBrandDto } from "../catalog.schema";
 import { supabase } from "@/lib/supabase";
 
 export class ProductService {
   async createBaseProduct(data: CreateBaseProductDto) {
-    const { data: newProduct, error } = await supabase.rpc(
-      "create_base_product",
-      data
-    );
-    if (error) throw error;
-    return newProduct;
+    // Crear el producto base
+    const { data: newProduct, error: productError } = await supabase
+      .from("product")
+      .insert({
+        name: data.name,
+        brand_id: data.brand_id,
+      })
+      .select("*")
+      .single();
+
+    if (productError) throw productError;
+
+    // Si hay categorías, crear las relaciones
+    if (data.categories && data.categories.length > 0) {
+      const categoryRelations = data.categories.map((categoryId) => ({
+        product_id: newProduct.id,
+        category_id: categoryId,
+      }));
+
+      const { error: categoryError } = await supabase
+        .from("product_category")
+        .insert(categoryRelations);
+
+      if (categoryError) throw categoryError;
+    }
+
+    // Obtener el producto completo con sus relaciones
+    const { data: productWithRelations, error: fetchError } = await supabase
+      .from("product")
+      .select(
+        `
+        *,
+        brand:brand_id(id, name),
+        product_category(
+          category:category_id(id, name, description)
+        )
+      `
+      )
+      .eq("id", newProduct.id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Transformar los datos al formato esperado
+    const categories =
+      productWithRelations.product_category?.map((pc: any) => pc.category) ||
+      [];
+
+    return {
+      id: productWithRelations.id,
+      name: productWithRelations.name,
+      brand_id: productWithRelations.brand_id,
+      brand: productWithRelations.brand,
+      categories: categories,
+      barcode: productWithRelations.barcode,
+    };
   }
 
   async createProductVariant(data: CreateProductVariantDto) {
     const { data: newProduct, error } = await supabase.rpc(
       "create_product_with_variant",
       {
-        e_barcode: data.barcode,
-        e_internal_code: data.internal_code,
         e_name: data.name,
         e_brand_id: data.brand_id,
-        e_capacity: data.capacity,
-        e_unit_id: data.unit_id,
         e_categories: data.categories,
-        e_business_types: data.business_types,
-        e_quantity_per_package: data.quantity_per_package,
         e_user_id: data.user_id,
         e_price: data.price,
         e_stock_quantity: data.stock_quantity,
@@ -38,10 +84,122 @@ export class ProductService {
     if (error) throw error;
     return newProduct;
   }
-  async getProductsByUser(userId: number) {
+  async getUserProducts(
+    page: number,
+    per_page: number,
+    search_term?: string,
+    sort: string = "name",
+    order: string = "asc",
+    user_id: string
+  ) {
     try {
-      return userId;
-    } catch (error) {
+      // Obtener todos los user_product_variant del usuario con sus relaciones
+      const { data, error, count } = await supabase
+        .from("user_product_variant")
+        .select(
+          `
+          *,
+          variant:variant_id(
+            id,
+            name,
+            status,
+            barcode,
+            capacity,
+            units,
+            uom:uom_id(
+              id,
+              name,
+              description
+            ),
+            product:product_id(
+              id,
+              name,
+              brand:brand_id(
+                id,
+                name
+              )
+            )
+          )
+        `,
+          { count: "exact" }
+        )
+        .eq("user_id", user_id);
+
+      if (error) throw error;
+
+      // Transformar los datos al formato esperado
+      let transformedProducts =
+        data?.map((upv: any) => {
+          const variant = upv.variant;
+          const product = variant?.product;
+          return {
+            id: variant?.id,
+            name: product?.name || "", // Nombre del producto base
+            price: String(upv.price),
+            capacity: variant?.capacity || null,
+            unit: variant?.uom?.name || "", // Solo el nombre de la unidad
+            brand: product?.brand?.name || "", // Nombre de la marca
+            barcode: variant?.barcode || null,
+            status: variant?.status || "ACTIVE",
+          };
+        }) || [];
+
+      // Aplicar búsqueda si existe search_term
+      if (search_term) {
+        const searchLower = search_term.toLowerCase();
+        transformedProducts = transformedProducts.filter((product: any) => {
+          return (
+            product.name?.toLowerCase().includes(searchLower) ||
+            product.barcode?.toLowerCase().includes(searchLower) ||
+            product.brand?.toLowerCase().includes(searchLower)
+          );
+        });
+      }
+
+      // Aplicar ordenamiento
+      const orderDirection = order.toLowerCase() === "desc" ? "desc" : "asc";
+      transformedProducts.sort((a: any, b: any) => {
+        let aVal: any;
+        let bVal: any;
+
+        if (sort === "name") {
+          aVal = a.name || "";
+          bVal = b.name || "";
+        } else if (sort === "price") {
+          aVal = parseFloat(a.price) || 0;
+          bVal = parseFloat(b.price) || 0;
+        } else {
+          aVal = a[sort] || "";
+          bVal = b[sort] || "";
+        }
+
+        if (orderDirection === "asc") {
+          if (typeof aVal === "string") {
+            return aVal.localeCompare(bVal);
+          }
+          return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+        } else {
+          if (typeof aVal === "string") {
+            return bVal.localeCompare(aVal);
+          }
+          return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+        }
+      });
+
+      // Guardar el total antes de paginar
+      const total = transformedProducts.length;
+
+      // Aplicar paginación
+      const paginatedProducts = transformedProducts.slice(
+        (page - 1) * per_page,
+        page * per_page
+      );
+
+      return {
+        products: paginatedProducts,
+        total: total,
+      };
+    } catch (error: any) {
       throw error;
     }
   }
@@ -286,6 +444,46 @@ export class ProductService {
     }));
 
     return transformedVariants || [];
+  }
+
+  async createUserProductVariant(data: CreateUserProductVariantDto) {
+    // Insertar en user_product_variant
+    const { data: userProductVariant, error } = await supabase
+      .from("user_product_variant")
+      .insert({
+        user_id: data.user_id,
+        variant_id: data.variant_id,
+        price: data.price,
+        stock_quantity: data.stock_quantity,
+        min_stock: data.min_stock,
+      })
+      .select("*")
+      .single();
+
+    if (error) throw error;
+    return userProductVariant;
+  }
+
+  async createProductVariantWithUser(data: CreateProductVariantWithUserDto) {
+    // Usar función RPC de Supabase para garantizar atomicidad
+    const { data: result, error } = await supabase.rpc(
+      "create_product_variant_with_user",
+      {
+        p_product_base_id: data.product_base_id,
+        p_presentation: data.presentation,
+        p_capacity: data.capacity,
+        p_unit_id: data.unit_id,
+        p_quantity_per_package: data.quantity_per_package,
+        p_price: data.price,
+        p_stock_quantity: data.stock_quantity,
+        p_min_stock: data.min_stock,
+        p_user_id: data.user_id,
+        p_barcode: data.barcode,
+      }
+    );
+
+    if (error) throw error;
+    return result;
   }
 
   //CATALOG

@@ -1,18 +1,45 @@
 import { z } from "zod";
 
 export const createBaseProductSchema = z.object({
-  barcode: z.string().trim(),
-  internal_code: z.string().trim(),
-  name: z
-    .string()
-    .trim()
-    .transform((val) => val.toLowerCase()),
-  brand_id: z.number().positive(),
-  capacity: z.number().positive(),
-  unit_id: z.number().positive(),
-  categories: z.array(z.number().positive()),
-  business_types: z.number().positive().array(),
-  quantity_per_package: z.number().positive(),
+  name: z.string().trim().min(1, "El nombre es requerido"),
+  brand_id: z.number().positive("El brand_id debe ser un número positivo"),
+  categories: z.array(z.number().positive()).default([]),
+});
+
+export const createUserProductVariantSchema = z.object({
+  product_base_id: z
+    .number()
+    .positive("El product_base_id debe ser un número positivo"),
+  variant_id: z.number().positive("El variant_id debe ser un número positivo"),
+  price: z.number().positive("El precio debe ser un número positivo"),
+  stock_quantity: z
+    .number()
+    .nonnegative("El stock_quantity debe ser un número no negativo"),
+  min_stock: z
+    .number()
+    .nonnegative("El min_stock debe ser un número no negativo"),
+  user_id: z.string().uuid("El user_id debe ser un UUID válido"),
+});
+
+export const createProductVariantWithUserSchema = z.object({
+  product_base_id: z
+    .number()
+    .positive("El product_base_id debe ser un número positivo"),
+  presentation: z.string().trim().min(1, "La presentación es requerida"),
+  capacity: z.number().positive("La capacidad debe ser un número positivo"),
+  unit_id: z.number().positive("El unit_id debe ser un número positivo"),
+  quantity_per_package: z
+    .number()
+    .positive("El quantity_per_package debe ser un número positivo"),
+  barcode: z.string().trim().min(1, "El barcode es requerido"),
+  price: z.number().positive("El precio debe ser un número positivo"),
+  stock_quantity: z
+    .number()
+    .nonnegative("El stock_quantity debe ser un número no negativo"),
+  min_stock: z
+    .number()
+    .nonnegative("El min_stock debe ser un número no negativo"),
+  user_id: z.string().uuid("El user_id debe ser un UUID válido"),
 });
 
 export const createProductVariantSchema = createBaseProductSchema.extend({
@@ -81,4 +108,10 @@ export type CreateBaseProductDto = z.infer<typeof createBaseProductSchema>;
 export type UpdateProductDto = z.infer<typeof updateProductSchema>;
 export type CreateProductVariantDto = z.infer<
   typeof createProductVariantSchema
+>;
+export type CreateUserProductVariantDto = z.infer<
+  typeof createUserProductVariantSchema
+>;
+export type CreateProductVariantWithUserDto = z.infer<
+  typeof createProductVariantWithUserSchema
 >;

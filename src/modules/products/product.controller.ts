@@ -4,6 +4,8 @@ import { HttpResponse } from "@/shared/response/http.response";
 import {
   CreateBaseProductDto,
   CreateProductVariantDto,
+  CreateUserProductVariantDto,
+  CreateProductVariantWithUserDto,
 } from "./product.schema";
 import { CreateBrandDto } from "./catalog.schema";
 
@@ -53,10 +55,27 @@ export class ProductController {
     }
   };
 
-  public getProductsByUser = async (req: Request, res: Response) => {
-    const userId = parseInt(req.params.id);
+  public getUserProducts = async (req: Request, res: Response) => {
+    const page = parseInt(req.query.page as string) || 1;
+    const per_page = parseInt(req.query.per_page as string) || 20;
+    const searchTerm = req.query.searchTerm as string;
+    const sort = (req.query.sort as string) || "name";
+    const order = (req.query.order as string) || "asc";
+    const user_id = req.query.user_id as string;
+
+    if (!user_id) {
+      return HttpResponse.BadRequest(res, { message: "user_id es requerido" });
+    }
+
     try {
-      const products = await this.productService.getProductsByUser(userId);
+      const products = await this.productService.getUserProducts(
+        page,
+        per_page,
+        searchTerm,
+        sort,
+        order,
+        user_id
+      );
       HttpResponse.Ok(res, products);
     } catch (error: any) {
       HttpResponse.BadRequest(res, error);
@@ -132,6 +151,28 @@ export class ProductController {
         productId
       );
       HttpResponse.Ok(res, variants);
+    } catch (error: any) {
+      HttpResponse.BadRequest(res, error);
+    }
+  };
+
+  public createUserProductVariant = async (req: Request, res: Response) => {
+    const data = req.body as CreateUserProductVariantDto;
+    try {
+      const result = await this.productService.createUserProductVariant(data);
+      HttpResponse.Ok(res, result);
+    } catch (error: any) {
+      HttpResponse.BadRequest(res, error);
+    }
+  };
+
+  public createProductVariantWithUser = async (req: Request, res: Response) => {
+    const data = req.body as CreateProductVariantWithUserDto;
+    try {
+      const result = await this.productService.createProductVariantWithUser(
+        data
+      );
+      HttpResponse.Ok(res, result);
     } catch (error: any) {
       HttpResponse.BadRequest(res, error);
     }

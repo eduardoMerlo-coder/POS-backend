@@ -3,6 +3,8 @@ import { BaseRouter } from "@/shared/router";
 import {
   createBaseProductSchema,
   createProductVariantSchema,
+  createUserProductVariantSchema,
+  createProductVariantWithUserSchema,
 } from "./product.schema";
 import { validateSchema } from "@/shared/middleware/base";
 
@@ -14,8 +16,8 @@ export class ProductRouter extends BaseRouter<ProductController> {
     this.router.get("/base-products", (req, res) =>
       this.controller.getBaseProducts(req, res)
     );
-    this.router.get("/products-user", (req, res) =>
-      this.controller.getProductsByUser(req, res)
+    this.router.get("/user-products", (req, res) =>
+      this.controller.getUserProducts(req, res)
     );
     this.router.get("/product-base/:id", (req, res) =>
       this.controller.getBaseProductById(req, res)
@@ -30,8 +32,13 @@ export class ProductRouter extends BaseRouter<ProductController> {
     );
     this.router.post(
       "/product-variant",
-      validateSchema(createProductVariantSchema),
-      (req, res) => this.controller.createProductVariant(req, res)
+      validateSchema(createProductVariantWithUserSchema),
+      (req, res) => this.controller.createProductVariantWithUser(req, res)
+    );
+    this.router.post(
+      "/user-product-variant",
+      validateSchema(createUserProductVariantSchema),
+      (req, res) => this.controller.createUserProductVariant(req, res)
     );
     this.router.get("/product/:id", (req, res) =>
       this.controller.getProductById(req, res)
