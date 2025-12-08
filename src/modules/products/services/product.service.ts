@@ -3,6 +3,7 @@ import {
   CreateBaseProductDto,
   CreateUserProductVariantDto,
   CreateProductVariantWithUserDto,
+  UpdateUserProductVariantPriceDto,
 } from "../product.schema";
 import { CreateBrandDto } from "../catalog.schema";
 import { supabase } from "@/lib/supabase";
@@ -87,10 +88,10 @@ export class ProductService {
   async getUserProducts(
     page: number,
     per_page: number,
+    user_id: string,
     search_term?: string,
     sort: string = "name",
-    order: string = "asc",
-    user_id: string
+    order: string = "asc"
   ) {
     try {
       // Obtener todos los user_product_variant del usuario con sus relaciones
@@ -134,6 +135,7 @@ export class ProductService {
           const product = variant?.product;
           return {
             id: variant?.id,
+            variant_id: upv.variant_id,
             name: product?.name || "", // Nombre del producto base
             price: String(upv.price),
             capacity: variant?.capacity || null,
@@ -157,8 +159,19 @@ export class ProductService {
       }
 
       // Aplicar ordenamiento
+      // Primero ordenar por precio 0 (los productos con precio 0 van primero)
+      // Luego aplicar el ordenamiento normal según el criterio seleccionado
       const orderDirection = order.toLowerCase() === "desc" ? "desc" : "asc";
       transformedProducts.sort((a: any, b: any) => {
+        // Priorizar productos con precio 0
+        const aPriceIsZero = parseFloat(a.price) === 0;
+        const bPriceIsZero = parseFloat(b.price) === 0;
+
+        // Si uno tiene precio 0 y el otro no, el de precio 0 va primero
+        if (aPriceIsZero && !bPriceIsZero) return -1;
+        if (!aPriceIsZero && bPriceIsZero) return 1;
+
+        // Si ambos tienen precio 0 o ambos no tienen precio 0, aplicar ordenamiento normal
         let aVal: any;
         let bVal: any;
 
@@ -462,6 +475,30 @@ export class ProductService {
 
     if (error) throw error;
     return userProductVariant;
+  }
+
+  async updateUserProductVariantPrice(
+    variantId: number,
+    data: UpdateUserProductVariantPriceDto
+  ) {
+    // Actualizar el precio en user_product_variant
+    const { data: updatedProductVariant, error } = await supabase
+      .from("user_product_variant")
+      .update({
+        price: data.price,
+      })
+      .eq("variant_id", variantId)
+      .eq("user_id", data.user_id)
+      .select("*")
+      .single();
+
+    if (error) throw error;
+    if (!updatedProductVariant) {
+      throw new Error(
+        "No se encontró el producto para actualizar. Verifica que el variant_id y user_id sean correctos."
+      );
+    }
+    return updatedProductVariant;
   }
 
   async createProductVariantWithUser(data: CreateProductVariantWithUserDto) {

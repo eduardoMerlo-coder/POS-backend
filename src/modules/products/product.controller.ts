@@ -6,6 +6,7 @@ import {
   CreateProductVariantDto,
   CreateUserProductVariantDto,
   CreateProductVariantWithUserDto,
+  UpdateUserProductVariantPriceDto,
 } from "./product.schema";
 import { CreateBrandDto } from "./catalog.schema";
 
@@ -71,10 +72,10 @@ export class ProductController {
       const products = await this.productService.getUserProducts(
         page,
         per_page,
+        user_id,
         searchTerm,
         sort,
-        order,
-        user_id
+        order
       );
       HttpResponse.Ok(res, products);
     } catch (error: any) {
@@ -170,6 +171,30 @@ export class ProductController {
     const data = req.body as CreateProductVariantWithUserDto;
     try {
       const result = await this.productService.createProductVariantWithUser(
+        data
+      );
+      HttpResponse.Ok(res, result);
+    } catch (error: any) {
+      HttpResponse.BadRequest(res, error);
+    }
+  };
+
+  public updateUserProductVariantPrice = async (
+    req: Request,
+    res: Response
+  ) => {
+    const variantId = parseInt(req.params.variant_id);
+    const data = req.body as UpdateUserProductVariantPriceDto;
+
+    if (!variantId || isNaN(variantId)) {
+      return HttpResponse.BadRequest(res, {
+        message: "variant_id debe ser un número válido",
+      });
+    }
+
+    try {
+      const result = await this.productService.updateUserProductVariantPrice(
+        variantId,
         data
       );
       HttpResponse.Ok(res, result);

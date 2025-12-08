@@ -5,6 +5,7 @@ import {
   createProductVariantSchema,
   createUserProductVariantSchema,
   createProductVariantWithUserSchema,
+  updateUserProductVariantPriceSchema,
 } from "./product.schema";
 import { validateSchema } from "@/shared/middleware/base";
 
@@ -39,6 +40,11 @@ export class ProductRouter extends BaseRouter<ProductController> {
       "/user-product-variant",
       validateSchema(createUserProductVariantSchema),
       (req, res) => this.controller.createUserProductVariant(req, res)
+    );
+    this.router.put(
+      "/user-product-variant/:variant_id",
+      validateSchema(updateUserProductVariantPriceSchema),
+      (req, res) => this.controller.updateUserProductVariantPrice(req, res)
     );
     this.router.get("/product/:id", (req, res) =>
       this.controller.getProductById(req, res)
