@@ -1,7 +1,28 @@
 import { z } from "zod";
 
 export const createBrandSchema = z.object({
-  name: z.string().trim().toLowerCase(),
+  name: z
+    .string()
+    .trim()
+    .min(1, "El nombre es requerido")
+    .transform((val) => val.toLowerCase()),
+});
+
+export const updateBrandSchema = z.object({
+  name: z.string().trim().min(1, "El nombre es requerido").optional(),
+});
+
+export const createCategorySchema = z.object({
+  name: z.string().trim().min(1, "El nombre es requerido"),
+  description: z.string().trim().optional(),
+});
+
+export const updateCategorySchema = z.object({
+  name: z.string().trim().min(1, "El nombre es requerido").optional(),
+  description: z.string().trim().optional(),
 });
 
 export type CreateBrandDto = z.infer<typeof createBrandSchema>;
+export type UpdateBrandDto = z.infer<typeof updateBrandSchema>;
+export type CreateCategoryDto = z.infer<typeof createCategorySchema>;
+export type UpdateCategoryDto = z.infer<typeof updateCategorySchema>;

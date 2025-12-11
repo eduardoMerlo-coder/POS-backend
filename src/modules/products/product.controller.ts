@@ -6,9 +6,16 @@ import {
   CreateProductVariantDto,
   CreateUserProductVariantDto,
   CreateProductVariantWithUserDto,
-  UpdateUserProductVariantPriceDto,
+  UpdateBaseProductDto,
+  UpdateUserProductVariantDto,
+  UpdateProductVariantDto,
 } from "./product.schema";
-import { CreateBrandDto } from "./catalog.schema";
+import {
+  CreateBrandDto,
+  UpdateBrandDto,
+  CreateCategoryDto,
+  UpdateCategoryDto,
+} from "./catalog.schema";
 
 export class ProductController {
   constructor(
@@ -145,6 +152,24 @@ export class ProductController {
     }
   };
 
+  public updateBaseProduct = async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id);
+    const data = req.body as UpdateBaseProductDto;
+
+    if (!id || isNaN(id)) {
+      return HttpResponse.BadRequest(res, {
+        message: "id debe ser un número válido",
+      });
+    }
+
+    try {
+      const product = await this.productService.updateBaseProduct(id, data);
+      HttpResponse.Ok(res, product);
+    } catch (error: any) {
+      HttpResponse.BadRequest(res, error);
+    }
+  };
+
   public getVariantsByProductId = async (req: Request, res: Response) => {
     const productId = parseInt(req.params.id);
     try {
@@ -179,22 +204,19 @@ export class ProductController {
     }
   };
 
-  public updateUserProductVariantPrice = async (
-    req: Request,
-    res: Response
-  ) => {
-    const variantId = parseInt(req.params.variant_id);
-    const data = req.body as UpdateUserProductVariantPriceDto;
+  public updateUserProductVariant = async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id);
+    const data = req.body as UpdateUserProductVariantDto;
 
-    if (!variantId || isNaN(variantId)) {
+    if (!id || isNaN(id)) {
       return HttpResponse.BadRequest(res, {
-        message: "variant_id debe ser un número válido",
+        message: "id debe ser un número válido",
       });
     }
 
     try {
-      const result = await this.productService.updateUserProductVariantPrice(
-        variantId,
+      const result = await this.productService.updateUserProductVariant(
+        id,
         data
       );
       HttpResponse.Ok(res, result);
@@ -203,16 +225,111 @@ export class ProductController {
     }
   };
 
-  // CATALOG
+  public getUserProductVariantById = async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id);
 
-  public getAllCategories = async (req: Request, res: Response) => {
+    if (!id || isNaN(id)) {
+      return HttpResponse.BadRequest(res, {
+        message: "id debe ser un número válido",
+      });
+    }
+
     try {
-      const categories = await this.productService.getAllCategories();
-      HttpResponse.Ok(res, categories);
+      const result = await this.productService.getUserProductVariantById(id);
+      HttpResponse.Ok(res, result);
     } catch (error: any) {
       HttpResponse.BadRequest(res, error);
     }
   };
+
+  public updateProductVariant = async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id);
+    const data = req.body as UpdateProductVariantDto;
+
+    if (!id || isNaN(id)) {
+      return HttpResponse.BadRequest(res, {
+        message: "id debe ser un número válido",
+      });
+    }
+
+    try {
+      const result = await this.productService.updateProductVariant(id, data);
+      HttpResponse.Ok(res, result);
+    } catch (error: any) {
+      HttpResponse.BadRequest(res, error);
+    }
+  };
+
+  // CATALOG - Categories
+
+  public getAllCategories = async (req: Request, res: Response) => {
+    const page = parseInt(req.query.page as string) || 1;
+    const per_page = parseInt(req.query.per_page as string) || 20;
+    const searchTerm = req.query.searchTerm as string;
+    const sort = (req.query.sort as string) || "name";
+    const order = (req.query.order as string) || "asc";
+
+    try {
+      const result = await this.productService.getAllCategories(
+        page,
+        per_page,
+        searchTerm,
+        sort,
+        order
+      );
+      HttpResponse.Ok(res, result);
+    } catch (error: any) {
+      HttpResponse.BadRequest(res, error);
+    }
+  };
+
+  public getCategoryById = async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id);
+
+    if (!id || isNaN(id)) {
+      return HttpResponse.BadRequest(res, {
+        message: "id debe ser un número válido",
+      });
+    }
+
+    try {
+      const category = await this.productService.getCategoryById(id);
+      HttpResponse.Ok(res, category);
+    } catch (error: any) {
+      HttpResponse.BadRequest(res, error);
+    }
+  };
+
+  public createCategory = async (req: Request, res: Response) => {
+    const data = req.body as CreateCategoryDto;
+    try {
+      const newCategory = await this.productService.createCategory(data);
+      HttpResponse.Ok(res, newCategory);
+    } catch (error: any) {
+      HttpResponse.BadRequest(res, error);
+    }
+  };
+
+  public updateCategory = async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id);
+    const data = req.body as UpdateCategoryDto;
+
+    if (!id || isNaN(id)) {
+      return HttpResponse.BadRequest(res, {
+        message: "id debe ser un número válido",
+      });
+    }
+
+    try {
+      const category = await this.productService.updateCategory(id, data);
+      HttpResponse.Ok(res, category);
+    } catch (error: any) {
+      HttpResponse.BadRequest(res, error);
+    }
+  };
+
+  // CATALOG - Brands
+
   public getBrands = async (req: Request, res: Response) => {
     try {
       const brands = await this.productService.getBrands();
@@ -221,6 +338,24 @@ export class ProductController {
       HttpResponse.BadRequest(res, error);
     }
   };
+
+  public getBrandById = async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id);
+
+    if (!id || isNaN(id)) {
+      return HttpResponse.BadRequest(res, {
+        message: "id debe ser un número válido",
+      });
+    }
+
+    try {
+      const brand = await this.productService.getBrandById(id);
+      HttpResponse.Ok(res, brand);
+    } catch (error: any) {
+      HttpResponse.BadRequest(res, error);
+    }
+  };
+
   public createBrand = async (req: Request, res: Response) => {
     const { name } = req.body as CreateBrandDto;
     try {
@@ -228,6 +363,24 @@ export class ProductController {
         name,
       });
       HttpResponse.Ok(res, newBrand);
+    } catch (error: any) {
+      HttpResponse.BadRequest(res, error);
+    }
+  };
+
+  public updateBrand = async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id);
+    const data = req.body as UpdateBrandDto;
+
+    if (!id || isNaN(id)) {
+      return HttpResponse.BadRequest(res, {
+        message: "id debe ser un número válido",
+      });
+    }
+
+    try {
+      const brand = await this.productService.updateBrand(id, data);
+      HttpResponse.Ok(res, brand);
     } catch (error: any) {
       HttpResponse.BadRequest(res, error);
     }

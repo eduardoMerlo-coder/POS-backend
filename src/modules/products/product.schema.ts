@@ -28,9 +28,7 @@ export const createProductVariantWithUserSchema = z.object({
   presentation: z.string().trim().min(1, "La presentación es requerida"),
   capacity: z.number().positive("La capacidad debe ser un número positivo"),
   unit_id: z.number().positive("El unit_id debe ser un número positivo"),
-  quantity_per_package: z
-    .number()
-    .positive("El quantity_per_package debe ser un número positivo"),
+  units: z.number().positive("El units debe ser un número positivo"),
   barcode: z.string().trim().min(1, "El barcode es requerido"),
   price: z.number().nonnegative("El precio debe ser un número no negativo"),
   stock_quantity: z
@@ -50,10 +48,52 @@ export const createProductVariantSchema = createBaseProductSchema.extend({
   status: z.enum(["ACTIVE", "INACTIVE"]),
 });
 
-export const updateUserProductVariantPriceSchema = z.object({
-  user_id: z.string().uuid("El user_id debe ser un UUID válido"),
+export const updateBaseProductSchema = z.object({
+  name: z.string().trim().min(1, "El nombre es requerido").optional(),
+  brand_id: z
+    .number()
+    .positive("El brand_id debe ser un número positivo")
+    .optional(),
+  categories: z.array(z.number().positive()).optional(),
+});
+
+export const updateUserProductVariantSchema = z.object({
+  user_id: z.string().uuid("El user_id debe ser un UUID válido").optional(),
+  variant_id: z
+    .number()
+    .positive("El variant_id debe ser un número positivo")
+    .optional(),
+  price: z
+    .number()
+    .nonnegative("El precio debe ser un número no negativo")
+    .optional(),
+  stock_quantity: z
+    .number()
+    .nonnegative("El stock_quantity debe ser un número no negativo")
+    .optional(),
+  min_stock: z
+    .number()
+    .nonnegative("El min_stock debe ser un número no negativo")
+    .optional(),
+});
+
+export const updateProductVariantSchema = z.object({
   variant_id: z.number().positive("El variant_id debe ser un número positivo"),
-  price: z.number().nonnegative("El precio debe ser un número no negativo"),
+  presentation: z
+    .string()
+    .trim()
+    .min(1, "La presentación es requerida")
+    .optional(),
+  capacity: z
+    .number()
+    .positive("La capacidad debe ser un número positivo")
+    .optional(),
+  unit_id: z
+    .union([z.number(), z.string()])
+    .transform((val) => Number(val))
+    .optional(),
+  units: z.number().positive("El units debe ser un número positivo").optional(),
+  barcode: z.string().trim().optional(),
 });
 
 export const updateProductSchema = z.object({
@@ -102,7 +142,7 @@ export const updateProductSchema = z.object({
           })
           .optional(),
 
-        quantityPerPackage: z.number().int().positive().optional(),
+        units: z.number().int().positive().optional(),
         stockQuantity: z.number().int().nonnegative().optional(),
       }),
     })
@@ -121,6 +161,10 @@ export type CreateUserProductVariantDto = z.infer<
 export type CreateProductVariantWithUserDto = z.infer<
   typeof createProductVariantWithUserSchema
 >;
-export type UpdateUserProductVariantPriceDto = z.infer<
-  typeof updateUserProductVariantPriceSchema
+export type UpdateBaseProductDto = z.infer<typeof updateBaseProductSchema>;
+export type UpdateUserProductVariantDto = z.infer<
+  typeof updateUserProductVariantSchema
+>;
+export type UpdateProductVariantDto = z.infer<
+  typeof updateProductVariantSchema
 >;
