@@ -213,11 +213,14 @@ export class ProductService {
 
       // Aplicar búsqueda si existe search_term
       if (search_term) {
+        // Escapar el término de búsqueda para prevenir coincidencias de patrón no deseadas
+        const escapedTerm = escapeSearchTerm(search_term);
+
         // Primero buscar marcas que coincidan con el término de búsqueda
         const { data: matchingBrands } = await supabase
           .from("brand")
           .select("id")
-          .ilike("name", `%${search_term}%`);
+          .ilike("name", `%${escapedTerm}%`);
 
         const brandIds = matchingBrands?.map((b) => b.id) || [];
 
@@ -237,7 +240,7 @@ export class ProductService {
             `,
               { count: "exact" }
             )
-            .ilike("name", `%${search_term}%`);
+            .ilike("name", `%${escapedTerm}%`);
 
           // Consulta 2: productos donde brand_id está en las marcas que coinciden
           const query2 = supabase
@@ -273,11 +276,38 @@ export class ProductService {
           const orderDirection =
             order.toLowerCase() === "desc" ? "desc" : "asc";
           uniqueProducts.sort((a, b) => {
-            const aVal = a[sort];
-            const bVal = b[sort];
+            // Manejar valores null/undefined con fallbacks apropiados
+            let aVal: any;
+            let bVal: any;
+
+            if (sort === "name") {
+              aVal = a.name || "";
+              bVal = b.name || "";
+            } else if (sort === "brand_id") {
+              aVal = a.brand_id ?? 0;
+              bVal = b.brand_id ?? 0;
+            } else {
+              // Para otros campos, usar fallback apropiado según el tipo
+              const valA = a[sort];
+              const valB = b[sort];
+              if (typeof valA === "string" || valA === null || valA === undefined) {
+                aVal = valA || "";
+                bVal = valB || "";
+              } else {
+                aVal = valA ?? 0;
+                bVal = valB ?? 0;
+              }
+            }
+
             if (orderDirection === "asc") {
+              if (typeof aVal === "string") {
+                return aVal.localeCompare(bVal);
+              }
               return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
             } else {
+              if (typeof aVal === "string") {
+                return bVal.localeCompare(aVal);
+              }
               return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
             }
           });
@@ -313,7 +343,7 @@ export class ProductService {
           };
         } else {
           // Si no hay marcas que coinciden, solo buscar en name
-          query = query.ilike("name", `%${search_term}%`);
+          query = query.ilike("name", `%${escapedTerm}%`);
         }
       }
 
@@ -360,11 +390,35 @@ export class ProductService {
   async getBaseProductById(id: number) {
     const { data, error } = await supabase
       .from("product")
-      .select("*")
+      .select(
+        `
+          *,
+          brand:brand_id(id, name),
+          product_category(
+            category:category_id(id, name, description)
+          ),
+          product_business_type(business_type_id)
+        `
+      )
       .eq("id", id)
       .single();
     if (error) throw error;
-    return data;
+
+    // Transformar los datos al formato esperado
+    const categories =
+      data.product_category?.map((pc: any) => pc.category) || [];
+    const business_types =
+      data.product_business_type?.map((pbt: any) => pbt.business_type_id) ||
+      [];
+
+    return {
+      id: data.id,
+      name: data.name,
+      brand_id: data.brand_id,
+      brand: data.brand,
+      categories: categories,
+      business_types: business_types,
+    };
   }
 
   async updateBaseProduct(id: number, data: UpdateBaseProductDto) {

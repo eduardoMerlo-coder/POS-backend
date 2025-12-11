@@ -92,18 +92,37 @@ export class ProductController {
 
   public getProductById = async (req: Request, res: Response) => {
     const id = parseInt(req.params.id);
+
+    if (!id || isNaN(id)) {
+      return HttpResponse.BadRequest(res, {
+        message: "id debe ser un número válido",
+      });
+    }
+
     try {
-      HttpResponse.Ok(res, {});
+      const product = await this.productService.getBaseProductById(id);
+      HttpResponse.Ok(res, product);
     } catch (error: any) {
       HttpResponse.BadRequest(res, error);
     }
   };
+
   public searchProducts = async (req: Request, res: Response) => {
-    const searchTerm = req.query.searchTerm as string;
     const page = parseInt(req.query.page as string) || 1;
-    const perPage = parseInt(req.query.perPage as string) || 20;
+    const per_page = parseInt(req.query.per_page as string) || 20;
+    const searchTerm = req.query.searchTerm as string;
+    const sort = (req.query.sort as string) || "name";
+    const order = (req.query.order as string) || "asc";
+
     try {
-      HttpResponse.Ok(res, {});
+      const products = await this.productService.getAllBaseProducts(
+        page,
+        per_page,
+        searchTerm,
+        sort,
+        order
+      );
+      HttpResponse.Ok(res, products);
     } catch (error: any) {
       HttpResponse.BadRequest(res, error);
     }
