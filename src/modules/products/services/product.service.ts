@@ -159,8 +159,27 @@ export class ProductService {
         aVal = parseFloat(a.price) || 0;
         bVal = parseFloat(b.price) || 0;
       } else {
-        aVal = a[sort] || "";
-        bVal = b[sort] || "";
+        // Para otros campos, determinar el tipo basándose en ambos valores
+        // para mantener consistencia de tipos
+        const valA = a[sort];
+        const valB = b[sort];
+        
+        // Si al menos uno es numérico (incluyendo 0), tratar ambos como números
+        const isNumeric = 
+          (typeof valA === "number" && !isNaN(valA)) ||
+          (typeof valB === "number" && !isNaN(valB));
+        
+        if (isNumeric) {
+          aVal = typeof valA === "number" ? valA : (valA ? Number(valA) : 0);
+          bVal = typeof valB === "number" ? valB : (valB ? Number(valB) : 0);
+          // Si la conversión falla, usar 0
+          aVal = isNaN(aVal) ? 0 : aVal;
+          bVal = isNaN(bVal) ? 0 : bVal;
+        } else {
+          // Si no son numéricos, tratar como strings
+          aVal = valA != null ? String(valA) : "";
+          bVal = valB != null ? String(valB) : "";
+        }
       }
 
       if (orderDirection === "asc") {
@@ -287,15 +306,26 @@ export class ProductService {
               aVal = a.brand_id ?? 0;
               bVal = b.brand_id ?? 0;
             } else {
-              // Para otros campos, usar fallback apropiado según el tipo
+              // Para otros campos, determinar el tipo basándose en ambos valores
+              // para mantener consistencia de tipos
               const valA = a[sort];
               const valB = b[sort];
-              if (typeof valA === "string" || valA === null || valA === undefined) {
-                aVal = valA || "";
-                bVal = valB || "";
+              
+              // Si al menos uno es numérico (incluyendo 0), tratar ambos como números
+              const isNumeric = 
+                (typeof valA === "number" && !isNaN(valA)) ||
+                (typeof valB === "number" && !isNaN(valB));
+              
+              if (isNumeric) {
+                aVal = typeof valA === "number" ? valA : (valA != null ? Number(valA) : 0);
+                bVal = typeof valB === "number" ? valB : (valB != null ? Number(valB) : 0);
+                // Si la conversión falla, usar 0
+                aVal = isNaN(aVal) ? 0 : aVal;
+                bVal = isNaN(bVal) ? 0 : bVal;
               } else {
-                aVal = valA ?? 0;
-                bVal = valB ?? 0;
+                // Si no son numéricos, tratar como strings
+                aVal = valA != null ? String(valA) : "";
+                bVal = valB != null ? String(valB) : "";
               }
             }
 
@@ -733,9 +763,11 @@ export class ProductService {
     const variant = upv.variant;
     const product = variant?.product;
 
-    // Extraer categorías como array de strings (nombres)
+    // Extraer categorías como array de números (IDs), filtrando valores inválidos
     const categories =
-      product?.product_category?.map((pc: any) => pc.category?.id || "") || [];
+      product?.product_category
+        ?.map((pc: any) => pc.category?.id)
+        .filter((id: any) => id !== undefined && id !== null && id !== "") || [];
 
     // Extraer business_types como array de números
     const business_types =

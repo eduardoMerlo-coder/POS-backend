@@ -158,6 +158,13 @@ export class ProductController {
 
   public getVariantsByProductId = async (req: Request, res: Response) => {
     const productId = parseInt(req.params.id);
+
+    if (!productId || isNaN(productId)) {
+      return HttpResponse.BadRequest(res, {
+        message: "id debe ser un número válido",
+      });
+    }
+
     try {
       const variants = await this.productService.getVariantsByProductId(
         productId

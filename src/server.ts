@@ -27,13 +27,42 @@ class MainServer extends BaseConfig {
   private middleware() {
     this.app.use(morgan("dev"));
 
+    // Configurar orígenes permitidos desde variable de entorno
+    // Formato: "http://localhost:5173,https://post-front-three.vercel.app"
+    const allowedOrigins = process.env.ALLOWED_ORIGINS
+      ? process.env.ALLOWED_ORIGINS.split(",").map((origin) => origin.trim())
+      : ["http://localhost:5173"]; // Fallback solo para desarrollo local
+
     const corsOptions = {
-      origin:
-        process.env.ALLOWED_ORIGINS?.split(",") || "http://localhost:5173", // Dominios permitidos, usa '*' para todos o configura específicos en .env
+      origin: (origin: string | undefined, callback: Function) => {
+        // Permitir peticiones sin origen (como mobile apps o Postman)
+        if (!origin) return callback(null, true);
+
+        // Verificar si el origen está en la lista de permitidos
+        if (allowedOrigins.indexOf(origin) !== -1) {
+          callback(null, true);
+        } else {
+          // En desarrollo, permitir cualquier origen para facilitar el testing
+          if (process.env.NODE_ENV !== "production") {
+            callback(null, true);
+          } else {
+            callback(new Error("Not allowed by CORS"));
+          }
+        }
+      },
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization"],
+      allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Accept",
+        "Origin",
+      ],
+      exposedHeaders: ["Content-Range", "X-Content-Range"],
       credentials: true, // Permite enviar cookies de autenticación cross-origin
       maxAge: 86400, // Tiempo en segundos que los resultados de una preflight request pueden ser cacheados
+      preflightContinue: false,
+      optionsSuccessStatus: 204,
     };
     this.app.use(cors(corsOptions));
 
