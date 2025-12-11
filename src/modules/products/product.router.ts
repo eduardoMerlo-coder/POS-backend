@@ -63,6 +63,10 @@ export class ProductRouter extends BaseRouter<ProductController> {
       validateSchema(updateProductVariantSchema),
       (req, res) => this.controller.updateProductVariant(req, res)
     );
+    // Check if user_product_variant exists - DEBE ir ANTES de /:id
+    this.router.get("/user-product-variant/check", (req, res) =>
+      this.controller.checkUserProductVariantExists(req, res)
+    );
     this.router.get("/user-product-variant/:id", (req, res) =>
       this.controller.getUserProductVariantById(req, res)
     );

@@ -163,22 +163,22 @@ export class ProductService {
         // para mantener consistencia de tipos
         const valA = a[sort];
         const valB = b[sort];
-        
+
         // Si al menos uno es numérico (incluyendo 0), tratar ambos como números
-        const isNumeric = 
+        const isNumeric =
           (typeof valA === "number" && !isNaN(valA)) ||
           (typeof valB === "number" && !isNaN(valB));
-        
+
         if (isNumeric) {
-          aVal = typeof valA === "number" ? valA : (valA ? Number(valA) : 0);
-          bVal = typeof valB === "number" ? valB : (valB ? Number(valB) : 0);
+          aVal = typeof valA === "number" ? valA : valA ? Number(valA) : 0;
+          bVal = typeof valB === "number" ? valB : valB ? Number(valB) : 0;
           // Si la conversión falla, usar 0
           aVal = isNaN(aVal) ? 0 : aVal;
           bVal = isNaN(bVal) ? 0 : bVal;
         } else {
           // Si no son numéricos, tratar como strings
-          aVal = valA != null ? String(valA) : "";
-          bVal = valB != null ? String(valB) : "";
+          aVal = valA !== null ? String(valA) : "";
+          bVal = valB !== null ? String(valB) : "";
         }
       }
 
@@ -217,9 +217,8 @@ export class ProductService {
     sort: string = "name",
     order: string = "asc"
   ) {
-    try {
-      let query = supabase.from("product").select(
-        `
+    let query = supabase.from("product").select(
+      `
           *,
           brand:brand_id(id, name),
           product_category(
@@ -227,29 +226,29 @@ export class ProductService {
           ),
           product_business_type(business_type_id)
         `,
-        { count: "exact" }
-      );
+      { count: "exact" }
+    );
 
-      // Aplicar búsqueda si existe search_term
-      if (search_term) {
-        // Escapar el término de búsqueda para prevenir coincidencias de patrón no deseadas
-        const escapedTerm = escapeSearchTerm(search_term);
+    // Aplicar búsqueda si existe search_term
+    if (search_term) {
+      // Escapar el término de búsqueda para prevenir coincidencias de patrón no deseadas
+      const escapedTerm = escapeSearchTerm(search_term);
 
-        // Primero buscar marcas que coincidan con el término de búsqueda
-        const { data: matchingBrands } = await supabase
-          .from("brand")
-          .select("id")
-          .ilike("name", `%${escapedTerm}%`);
+      // Primero buscar marcas que coincidan con el término de búsqueda
+      const { data: matchingBrands } = await supabase
+        .from("brand")
+        .select("id")
+        .ilike("name", `%${escapedTerm}%`);
 
-        const brandIds = matchingBrands?.map((b) => b.id) || [];
+      const brandIds = matchingBrands?.map((b) => b.id) || [];
 
-        // Si hay marcas que coinciden, hacer dos consultas y combinar resultados
-        if (brandIds.length > 0) {
-          // Consulta 1: productos donde name coincide
-          const query1 = supabase
-            .from("product")
-            .select(
-              `
+      // Si hay marcas que coinciden, hacer dos consultas y combinar resultados
+      if (brandIds.length > 0) {
+        // Consulta 1: productos donde name coincide
+        const query1 = supabase
+          .from("product")
+          .select(
+            `
               *,
               brand:brand_id(id, name),
               product_category(
@@ -257,15 +256,15 @@ export class ProductService {
               ),
               product_business_type(business_type_id)
             `,
-              { count: "exact" }
-            )
-            .ilike("name", `%${escapedTerm}%`);
+            { count: "exact" }
+          )
+          .ilike("name", `%${escapedTerm}%`);
 
-          // Consulta 2: productos donde brand_id está en las marcas que coinciden
-          const query2 = supabase
-            .from("product")
-            .select(
-              `
+        // Consulta 2: productos donde brand_id está en las marcas que coinciden
+        const query2 = supabase
+          .from("product")
+          .select(
+            `
               *,
               brand:brand_id(id, name),
               product_category(
@@ -273,148 +272,151 @@ export class ProductService {
               ),
               product_business_type(business_type_id)
             `
-            )
-            .in("brand_id", brandIds);
+          )
+          .in("brand_id", brandIds);
 
-          // Ejecutar ambas consultas
-          const [result1, result2] = await Promise.all([query1, query2]);
+        // Ejecutar ambas consultas
+        const [result1, result2] = await Promise.all([query1, query2]);
 
-          if (result1.error) throw result1.error;
-          if (result2.error) throw result2.error;
+        if (result1.error) throw result1.error;
+        if (result2.error) throw result2.error;
 
-          // Combinar resultados y eliminar duplicados
-          const combinedData = [
-            ...(result1.data || []),
-            ...(result2.data || []),
-          ];
-          const uniqueProducts = Array.from(
-            new Map(combinedData.map((p) => [p.id, p])).values()
-          );
+        // Combinar resultados y eliminar duplicados
+        const combinedData = [...(result1.data || []), ...(result2.data || [])];
+        const uniqueProducts = Array.from(
+          new Map(combinedData.map((p) => [p.id, p])).values()
+        );
 
-          // Aplicar ordenamiento a los resultados combinados
-          const orderDirection =
-            order.toLowerCase() === "desc" ? "desc" : "asc";
-          uniqueProducts.sort((a, b) => {
-            // Manejar valores null/undefined con fallbacks apropiados
-            let aVal: any;
-            let bVal: any;
+        // Aplicar ordenamiento a los resultados combinados
+        const orderDirection = order.toLowerCase() === "desc" ? "desc" : "asc";
+        uniqueProducts.sort((a, b) => {
+          // Manejar valores null/undefined con fallbacks apropiados
+          let aVal: any;
+          let bVal: any;
 
-            if (sort === "name") {
-              aVal = a.name || "";
-              bVal = b.name || "";
-            } else if (sort === "brand_id") {
-              aVal = a.brand_id ?? 0;
-              bVal = b.brand_id ?? 0;
+          if (sort === "name") {
+            aVal = a.name || "";
+            bVal = b.name || "";
+          } else if (sort === "brand_id") {
+            aVal = a.brand_id ?? 0;
+            bVal = b.brand_id ?? 0;
+          } else {
+            // Para otros campos, determinar el tipo basándose en ambos valores
+            // para mantener consistencia de tipos
+            const valA = a[sort];
+            const valB = b[sort];
+
+            // Si al menos uno es numérico (incluyendo 0), tratar ambos como números
+            const isNumeric =
+              (typeof valA === "number" && !isNaN(valA)) ||
+              (typeof valB === "number" && !isNaN(valB));
+
+            if (isNumeric) {
+              aVal =
+                typeof valA === "number"
+                  ? valA
+                  : valA !== null
+                  ? Number(valA)
+                  : 0;
+              bVal =
+                typeof valB === "number"
+                  ? valB
+                  : valB !== null
+                  ? Number(valB)
+                  : 0;
+              // Si la conversión falla, usar 0
+              aVal = isNaN(aVal) ? 0 : aVal;
+              bVal = isNaN(bVal) ? 0 : bVal;
             } else {
-              // Para otros campos, determinar el tipo basándose en ambos valores
-              // para mantener consistencia de tipos
-              const valA = a[sort];
-              const valB = b[sort];
-              
-              // Si al menos uno es numérico (incluyendo 0), tratar ambos como números
-              const isNumeric = 
-                (typeof valA === "number" && !isNaN(valA)) ||
-                (typeof valB === "number" && !isNaN(valB));
-              
-              if (isNumeric) {
-                aVal = typeof valA === "number" ? valA : (valA != null ? Number(valA) : 0);
-                bVal = typeof valB === "number" ? valB : (valB != null ? Number(valB) : 0);
-                // Si la conversión falla, usar 0
-                aVal = isNaN(aVal) ? 0 : aVal;
-                bVal = isNaN(bVal) ? 0 : bVal;
-              } else {
-                // Si no son numéricos, tratar como strings
-                aVal = valA != null ? String(valA) : "";
-                bVal = valB != null ? String(valB) : "";
-              }
+              // Si no son numéricos, tratar como strings
+              aVal = valA !== null ? String(valA) : "";
+              bVal = valB !== null ? String(valB) : "";
             }
+          }
 
-            if (orderDirection === "asc") {
-              if (typeof aVal === "string") {
-                return aVal.localeCompare(bVal);
-              }
-              return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
-            } else {
-              if (typeof aVal === "string") {
-                return bVal.localeCompare(aVal);
-              }
-              return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+          if (orderDirection === "asc") {
+            if (typeof aVal === "string") {
+              return aVal.localeCompare(bVal);
             }
-          });
+            return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+          } else {
+            if (typeof aVal === "string") {
+              return bVal.localeCompare(aVal);
+            }
+            return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+          }
+        });
 
-          // Aplicar paginación
-          const paginatedData = uniqueProducts.slice(
-            (page - 1) * per_page,
-            page * per_page
-          );
+        // Aplicar paginación
+        const paginatedData = uniqueProducts.slice(
+          (page - 1) * per_page,
+          page * per_page
+        );
 
-          // Transformar los datos al formato esperado
-          const transformedProducts = paginatedData.map((product: any) => {
-            const categories =
-              product.product_category?.map((pc: any) => pc.category) || [];
-            const business_types =
-              product.product_business_type?.map(
-                (pbt: any) => pbt.business_type_id
-              ) || [];
-
-            return {
-              id: product.id,
-              name: product.name,
-              brand_id: product.brand_id,
-              brand: product.brand,
-              categories: categories,
-              business_types: business_types,
-            };
-          });
+        // Transformar los datos al formato esperado
+        const transformedProducts = paginatedData.map((product: any) => {
+          const categories =
+            product.product_category?.map((pc: any) => pc.category) || [];
+          const business_types =
+            product.product_business_type?.map(
+              (pbt: any) => pbt.business_type_id
+            ) || [];
 
           return {
-            products: transformedProducts,
-            total: uniqueProducts.length,
+            id: product.id,
+            name: product.name,
+            brand_id: product.brand_id,
+            brand: product.brand,
+            categories: categories,
+            business_types: business_types,
           };
-        } else {
-          // Si no hay marcas que coinciden, solo buscar en name
-          query = query.ilike("name", `%${escapedTerm}%`);
-        }
-      }
-
-      // Aplicar ordenamiento
-      const orderDirection = order.toLowerCase() === "desc" ? "desc" : "asc";
-      query = query.order(sort, { ascending: orderDirection === "asc" });
-
-      // Aplicar paginación
-      const { data, error, count } = await query.range(
-        (page - 1) * per_page,
-        page * per_page - 1
-      );
-
-      if (error) throw error;
-
-      // Transformar los datos al formato esperado
-      const transformedProducts = data?.map((product: any) => {
-        // Extraer categories del formato product_category
-        const categories =
-          product.product_category?.map((pc: any) => pc.category) || [];
-
-        // Extraer business_types como array de IDs
-        const business_types =
-          product.product_business_type?.map(
-            (pbt: any) => pbt.business_type_id
-          ) || [];
+        });
 
         return {
-          id: product.id,
-          name: product.name,
-          brand_id: product.brand_id,
-          brand: product.brand,
-          categories: categories,
-          business_types: business_types,
+          products: transformedProducts,
+          total: uniqueProducts.length,
         };
-      });
-
-      return { products: transformedProducts, total: count };
-    } catch (error: any) {
-      throw error;
+      } else {
+        // Si no hay marcas que coinciden, solo buscar en name
+        query = query.ilike("name", `%${escapedTerm}%`);
+      }
     }
+
+    // Aplicar ordenamiento
+    const orderDirection = order.toLowerCase() === "desc" ? "desc" : "asc";
+    query = query.order(sort, { ascending: orderDirection === "asc" });
+
+    // Aplicar paginación
+    const { data, error, count } = await query.range(
+      (page - 1) * per_page,
+      page * per_page - 1
+    );
+
+    if (error) throw error;
+
+    // Transformar los datos al formato esperado
+    const transformedProducts = data?.map((product: any) => {
+      // Extraer categories del formato product_category
+      const categories =
+        product.product_category?.map((pc: any) => pc.category) || [];
+
+      // Extraer business_types como array de IDs
+      const business_types =
+        product.product_business_type?.map(
+          (pbt: any) => pbt.business_type_id
+        ) || [];
+
+      return {
+        id: product.id,
+        name: product.name,
+        brand_id: product.brand_id,
+        brand: product.brand,
+        categories: categories,
+        business_types: business_types,
+      };
+    });
+
+    return { products: transformedProducts, total: count };
   }
 
   async getBaseProductById(id: number) {
@@ -438,8 +440,7 @@ export class ProductService {
     const categories =
       data.product_category?.map((pc: any) => pc.category) || [];
     const business_types =
-      data.product_business_type?.map((pbt: any) => pbt.business_type_id) ||
-      [];
+      data.product_business_type?.map((pbt: any) => pbt.business_type_id) || [];
 
     return {
       id: data.id,
@@ -767,7 +768,8 @@ export class ProductService {
     const categories =
       product?.product_category
         ?.map((pc: any) => pc.category?.id)
-        .filter((id: any) => id !== undefined && id !== null && id !== "") || [];
+        .filter((id: any) => id !== undefined && id !== null && id !== "") ||
+      [];
 
     // Extraer business_types como array de números
     const business_types =
@@ -991,5 +993,20 @@ export class ProductService {
 
     if (fetchError) throw fetchError;
     return updatedBrand;
+  }
+
+  async checkUserProductVariantExists(
+    variantId: number,
+    userId: string
+  ): Promise<boolean> {
+    const { data, error } = await supabase
+      .from("user_product_variant")
+      .select("id")
+      .eq("variant_id", variantId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return !!data;
   }
 }

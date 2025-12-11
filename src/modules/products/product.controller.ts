@@ -378,4 +378,34 @@ export class ProductController {
       HttpResponse.BadRequest(res, error);
     }
   };
+
+  public checkUserProductVariantExists = async (
+    req: Request,
+    res: Response
+  ) => {
+    const variantId = parseInt(req.query.variant_id as string);
+    const userId = req.query.user_id as string;
+
+    if (!variantId || isNaN(variantId)) {
+      return HttpResponse.BadRequest(res, {
+        message: "variant_id debe ser un número válido",
+      });
+    }
+
+    if (!userId) {
+      return HttpResponse.BadRequest(res, {
+        message: "user_id es requerido",
+      });
+    }
+
+    try {
+      const exists = await this.productService.checkUserProductVariantExists(
+        variantId,
+        userId
+      );
+      HttpResponse.Ok(res, { exists });
+    } catch (error: any) {
+      HttpResponse.BadRequest(res, error);
+    }
+  };
 }
