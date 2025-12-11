@@ -109,39 +109,6 @@ export class ProductController {
     }
   };
 
-  public updateProduct = async (req: Request, res: Response) => {
-    const id = parseInt(req.params.id);
-    try {
-      const product = await this.productService.updateProduct(id, req.body);
-      HttpResponse.Ok(res, product);
-    } catch (error: any) {
-      HttpResponse.BadRequest(res, error);
-    }
-  };
-
-  public updateProductWithVariant = async (req: Request, res: Response) => {
-    const id = parseInt(req.params.id);
-    try {
-      const product = await this.productService.updateProductWithVariant(
-        id,
-        req.body
-      );
-      HttpResponse.Ok(res, product);
-    } catch (error: any) {
-      HttpResponse.BadRequest(res, error);
-    }
-  };
-
-  public deleteProduct = async (req: Request, res: Response) => {
-    const id = parseInt(req.params.id);
-    try {
-      const product = await this.productService.deleteProduct(id);
-      HttpResponse.Ok(res, product);
-    } catch (error: any) {
-      HttpResponse.BadRequest(res, error);
-    }
-  };
-
   public getBaseProductById = async (req: Request, res: Response) => {
     const id = parseInt(req.params.id);
     try {

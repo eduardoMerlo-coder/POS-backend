@@ -85,7 +85,15 @@ export const updateProductVariantSchema = z.object({
     .positive("La capacidad debe ser un número positivo")
     .optional(),
   unit_id: z
-    .union([z.number(), z.string()])
+    .union([
+      z.number().positive("El unit_id debe ser un número positivo"),
+      z
+        .string()
+        .trim()
+        .refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
+          message: "El unit_id debe ser un número positivo",
+        }),
+    ])
     .transform((val) => Number(val))
     .optional(),
   units: z.number().positive("El units debe ser un número positivo").optional(),

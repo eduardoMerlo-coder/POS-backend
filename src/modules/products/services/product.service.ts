@@ -15,63 +15,34 @@ import {
 } from "../catalog.schema";
 import { supabase } from "@/lib/supabase";
 
+/**
+ * Escapes special characters in search terms for safe use in PostgREST filter strings.
+ * Escapes LIKE pattern wildcards (% and _) and PostgREST filter syntax characters (commas, parentheses).
+ */
+function escapeSearchTerm(term: string): string {
+  return term
+    .replace(/\\/g, "\\\\") // Escape backslashes first
+    .replace(/%/g, "\\%") // Escape LIKE wildcard %
+    .replace(/_/g, "\\_") // Escape LIKE wildcard _
+    .replace(/,/g, "\\,") // Escape commas that could break filter syntax
+    .replace(/\(/g, "\\(") // Escape opening parentheses
+    .replace(/\)/g, "\\)"); // Escape closing parentheses
+}
+
 export class ProductService {
   async createBaseProduct(data: CreateBaseProductDto) {
-    // Crear el producto base
-    const { data: newProduct, error: productError } = await supabase
-      .from("product")
-      .insert({
-        name: data.name,
-        brand_id: data.brand_id,
-      })
-      .select("*")
-      .single();
+    // Usar función RPC para creación atómica del producto con categorías
+    // Esto garantiza que si la inserción de categorías falla, la creación del producto se revierte
+    const { data: result, error } = await supabase.rpc("create_base_product", {
+      p_name: data.name,
+      p_brand_id: data.brand_id,
+      p_category_ids: data.categories || [],
+    });
 
-    if (productError) throw productError;
+    if (error) throw error;
 
-    // Si hay categorías, crear las relaciones
-    if (data.categories && data.categories.length > 0) {
-      const categoryRelations = data.categories.map((categoryId) => ({
-        product_id: newProduct.id,
-        category_id: categoryId,
-      }));
-
-      const { error: categoryError } = await supabase
-        .from("product_category")
-        .insert(categoryRelations);
-
-      if (categoryError) throw categoryError;
-    }
-
-    // Obtener el producto completo con sus relaciones
-    const { data: productWithRelations, error: fetchError } = await supabase
-      .from("product")
-      .select(
-        `
-        *,
-        brand:brand_id(id, name),
-        product_category(
-          category:category_id(id, name, description)
-        )
-      `
-      )
-      .eq("id", newProduct.id)
-      .single();
-
-    if (fetchError) throw fetchError;
-
-    // Transformar los datos al formato esperado
-    const categories =
-      productWithRelations.product_category?.map((pc: any) => pc.category) ||
-      [];
-
-    return {
-      id: productWithRelations.id,
-      name: productWithRelations.name,
-      brand_id: productWithRelations.brand_id,
-      brand: productWithRelations.brand,
-      categories: categories,
-    };
+    // La función RPC ya retorna el producto con sus relaciones en el formato correcto
+    return result;
   }
 
   async createProductVariant(data: CreateProductVariantDto) {
@@ -381,39 +352,6 @@ export class ProductService {
       });
 
       return { products: transformedProducts, total: count };
-    } catch (error: any) {
-      throw error;
-    }
-  }
-
-  /**======================= OLD END POINTS ========================*/
-  async updateProduct(id: number, data: any) {
-    try {
-      return id;
-    } catch (error: any) {
-      throw error;
-    }
-  }
-
-  async updateProductWithVariant(productId: number, data: any) {
-    try {
-      return productId;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async deleteProduct(id: number) {
-    try {
-      return id;
-    } catch (error: any) {
-      throw error;
-    }
-  }
-
-  async searchProductVariants(searchTerm: string) {
-    try {
-      return searchTerm;
     } catch (error: any) {
       throw error;
     }
@@ -805,8 +743,10 @@ export class ProductService {
 
     // Aplicar búsqueda si existe search_term
     if (search_term) {
+      // Escapar el término de búsqueda para prevenir inyección de filtros
+      const escapedTerm = escapeSearchTerm(search_term);
       query = query.or(
-        `name.ilike.%${search_term}%,description.ilike.%${search_term}%`
+        `name.ilike.%${escapedTerm}%,description.ilike.%${escapedTerm}%`
       );
     }
 

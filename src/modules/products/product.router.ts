@@ -72,12 +72,6 @@ export class ProductRouter extends BaseRouter<ProductController> {
     this.router.get("/search", (req, res) =>
       this.controller.searchProducts(req, res)
     );
-    this.router.put("/product/:id", (req, res) =>
-      this.controller.updateProductWithVariant(req, res)
-    );
-    this.router.delete("/product/:id", (req, res) =>
-      this.controller.deleteProduct(req, res)
-    );
     // CATALOG ENDPOINTS - Categories
 
     this.router.get("/category", (req, res) =>
