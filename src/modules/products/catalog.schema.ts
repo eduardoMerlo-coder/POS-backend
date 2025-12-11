@@ -9,7 +9,12 @@ export const createBrandSchema = z.object({
 });
 
 export const updateBrandSchema = z.object({
-  name: z.string().trim().min(1, "El nombre es requerido").optional(),
+  name: z
+    .string()
+    .trim()
+    .min(1, "El nombre es requerido")
+    .transform((val) => val.toLowerCase())
+    .optional(),
 });
 
 export const createCategorySchema = z.object({

@@ -7,9 +7,6 @@ export const createBaseProductSchema = z.object({
 });
 
 export const createUserProductVariantSchema = z.object({
-  product_base_id: z
-    .number()
-    .positive("El product_base_id debe ser un número positivo"),
   variant_id: z.number().positive("El variant_id debe ser un número positivo"),
   price: z.number().nonnegative("El precio debe ser un número no negativo"),
   stock_quantity: z
@@ -78,7 +75,6 @@ export const updateUserProductVariantSchema = z.object({
 });
 
 export const updateProductVariantSchema = z.object({
-  variant_id: z.number().positive("El variant_id debe ser un número positivo"),
   presentation: z
     .string()
     .trim()

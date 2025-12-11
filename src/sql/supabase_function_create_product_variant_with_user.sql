@@ -6,7 +6,7 @@ CREATE OR REPLACE FUNCTION create_product_variant_with_user(
   p_presentation VARCHAR,
   p_capacity NUMERIC,
   p_unit_id INTEGER,
-  p_units INTEGER,
+  p_quantity_per_package INTEGER,
   p_price NUMERIC,
   p_stock_quantity INTEGER,
   p_min_stock INTEGER,
@@ -36,7 +36,7 @@ BEGIN
     p_presentation,
     p_capacity,
     p_unit_id,
-    p_units,
+    p_quantity_per_package,
     p_barcode,
     'ACTIVE'::"ProductStatus"
   )

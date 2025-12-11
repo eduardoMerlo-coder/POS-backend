@@ -466,29 +466,19 @@ export class ProductService {
       if (updateError) throw updateError;
     }
 
-    // Si hay categorías, actualizar las relaciones
+    // Si hay categorías, actualizar las relaciones de forma atómica
     if (data.categories !== undefined) {
-      // Eliminar todas las categorías existentes
-      const { error: deleteError } = await supabase
-        .from("product_category")
-        .delete()
-        .eq("product_id", id);
+      // Usar función RPC para actualización atómica de categorías
+      // Esto garantiza que si la inserción falla, la eliminación se revierte
+      const { error: categoryUpdateError } = await supabase.rpc(
+        "update_product_categories",
+        {
+          p_product_id: id,
+          p_category_ids: data.categories,
+        }
+      );
 
-      if (deleteError) throw deleteError;
-
-      // Insertar las nuevas categorías si hay alguna
-      if (data.categories.length > 0) {
-        const categoryRelations = data.categories.map((categoryId) => ({
-          product_id: id,
-          category_id: categoryId,
-        }));
-
-        const { error: insertError } = await supabase
-          .from("product_category")
-          .insert(categoryRelations);
-
-        if (insertError) throw insertError;
-      }
+      if (categoryUpdateError) throw categoryUpdateError;
     }
 
     // Obtener el producto actualizado con sus relaciones
@@ -790,7 +780,7 @@ export class ProductService {
         p_presentation: data.presentation,
         p_capacity: data.capacity,
         p_unit_id: data.unit_id,
-        p_units: data.units,
+        p_quantity_per_package: data.units,
         p_price: data.price,
         p_stock_quantity: data.stock_quantity,
         p_min_stock: data.min_stock,
