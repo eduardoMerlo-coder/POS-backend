@@ -258,14 +258,20 @@ export class ProductController {
   public getAllCategories = async (req: Request, res: Response) => {
     const page = parseInt(req.query.page as string) || 1;
     const per_page = parseInt(req.query.per_page as string) || 20;
+    const user_id = req.query.user_id as string;
     const searchTerm = req.query.searchTerm as string;
     const sort = (req.query.sort as string) || "name";
     const order = (req.query.order as string) || "asc";
+
+    if (!user_id) {
+      return HttpResponse.BadRequest(res, { message: "user_id es requerido" });
+    }
 
     try {
       const result = await this.productService.getAllCategories(
         page,
         per_page,
+        user_id,
         searchTerm,
         sort,
         order
@@ -324,8 +330,14 @@ export class ProductController {
   // CATALOG - Brands
 
   public getBrands = async (req: Request, res: Response) => {
+    const user_id = req.query.user_id as string;
+
+    if (!user_id) {
+      return HttpResponse.BadRequest(res, { message: "user_id es requerido" });
+    }
+
     try {
-      const brands = await this.productService.getBrands();
+      const brands = await this.productService.getBrands(user_id);
       HttpResponse.Ok(res, brands);
     } catch (error: any) {
       HttpResponse.BadRequest(res, error);
@@ -350,11 +362,9 @@ export class ProductController {
   };
 
   public createBrand = async (req: Request, res: Response) => {
-    const { name } = req.body as CreateBrandDto;
+    const data = req.body as CreateBrandDto;
     try {
-      const newBrand = await this.productService.createBrand({
-        name,
-      });
+      const newBrand = await this.productService.createBrand(data);
       HttpResponse.Ok(res, newBrand);
     } catch (error: any) {
       HttpResponse.BadRequest(res, error);

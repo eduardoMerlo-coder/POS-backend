@@ -6,6 +6,7 @@ export const createBrandSchema = z.object({
     .trim()
     .min(1, "El nombre es requerido")
     .transform((val) => val.toLowerCase()),
+  user_id: z.string().uuid("user_id debe ser un UUID válido").optional(),
 });
 
 export const updateBrandSchema = z.object({
@@ -20,6 +21,7 @@ export const updateBrandSchema = z.object({
 export const createCategorySchema = z.object({
   name: z.string().trim().min(1, "El nombre es requerido"),
   description: z.string().trim().optional(),
+  user_id: z.string().uuid("user_id debe ser un UUID válido").optional(),
 });
 
 export const updateCategorySchema = z.object({

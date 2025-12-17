@@ -120,6 +120,7 @@ export class ProductService {
           brand: product?.brand?.name || "", // Nombre de la marca
           barcode: variant?.barcode || null,
           status: variant?.status || "ACTIVE",
+          stock_quantity: upv.stock_quantity || 0,
         };
       }) || [];
 
@@ -823,11 +824,37 @@ export class ProductService {
   async getAllCategories(
     page: number,
     per_page: number,
+    user_id?: string,
     search_term?: string,
     sort: string = "name",
     order: string = "asc"
   ) {
     let query = supabase.from("category").select("*", { count: "exact" });
+
+    // Filtrar por usuario o business_type_id si se proporciona user_id
+    if (user_id) {
+      // Obtener el business_type_id del usuario desde su profile
+      const { data: profile, error: profileError } = await supabase
+        .from("profile")
+        .select("business_type_id")
+        .eq("id", user_id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Construir el filtro: user_id = user_id OR business_type_id = business_type_id del usuario
+      if (profile?.business_type_id) {
+        query = query.or(
+          `user_id.eq.${user_id},business_type_id.eq.${profile.business_type_id}`
+        );
+      } else {
+        // Si el usuario no tiene business_type_id, solo filtrar por user_id
+        query = query.eq("user_id", user_id);
+      }
+    } else {
+      // Si no hay user_id, solo devolver categorías sin owner (globales)
+      query = query.is("user_id", null).is("business_type_id", null);
+    }
 
     // Aplicar búsqueda si existe search_term
     if (search_term) {
@@ -867,12 +894,39 @@ export class ProductService {
   }
 
   async createCategory(data: CreateCategoryDto) {
+    // Preparar datos de inserción
+    const insertData: {
+      name: string;
+      description?: string | null;
+      user_id?: string;
+      business_type_id?: number | null;
+    } = {
+      name: data.name,
+      description: data.description || null,
+    };
+
+    // Si se proporciona user_id, determinar si asignar user_id o business_type_id
+    if (data.user_id) {
+      // Obtener el business_type_id del usuario desde su profile
+      const { data: profile, error: profileError } = await supabase
+        .from("profile")
+        .select("business_type_id")
+        .eq("id", data.user_id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Si el usuario tiene business_type_id, asignarlo; si no, asignar user_id
+      if (profile?.business_type_id) {
+        insertData.business_type_id = profile.business_type_id;
+      } else {
+        insertData.user_id = data.user_id;
+      }
+    }
+
     const { data: newCategory, error } = await supabase
       .from("category")
-      .insert({
-        name: data.name,
-        description: data.description || null,
-      })
+      .insert(insertData)
       .select("*")
       .single();
     if (error) throw error;
@@ -927,8 +981,35 @@ export class ProductService {
   }
 
   //CATALOG - Brands
-  async getBrands() {
-    const { data, error } = await supabase.from("brand").select("*");
+  async getBrands(user_id?: string) {
+    let query = supabase.from("brand").select("*");
+
+    // Filtrar por usuario o business_type_id si se proporciona user_id
+    if (user_id) {
+      // Obtener el business_type_id del usuario desde su profile
+      const { data: profile, error: profileError } = await supabase
+        .from("profile")
+        .select("business_type_id")
+        .eq("id", user_id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Construir el filtro: user_id = user_id OR business_type_id = business_type_id del usuario
+      if (profile?.business_type_id) {
+        query = query.or(
+          `user_id.eq.${user_id},business_type_id.eq.${profile.business_type_id}`
+        );
+      } else {
+        // Si el usuario no tiene business_type_id, solo filtrar por user_id
+        query = query.eq("user_id", user_id);
+      }
+    } else {
+      // Si no hay user_id, solo devolver marcas sin owner (globales)
+      query = query.is("user_id", null).is("business_type_id", null);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return data;
   }
@@ -943,14 +1024,42 @@ export class ProductService {
     return data;
   }
 
-  async createBrand({ name }: CreateBrandDto) {
-    const { data, error } = await supabase
+  async createBrand(data: CreateBrandDto) {
+    // Preparar datos de inserción
+    const insertData: {
+      name: string;
+      user_id?: string;
+      business_type_id?: number | null;
+    } = {
+      name: data.name,
+    };
+
+    // Si se proporciona user_id, determinar si asignar user_id o business_type_id
+    if (data.user_id) {
+      // Obtener el business_type_id del usuario desde su profile
+      const { data: profile, error: profileError } = await supabase
+        .from("profile")
+        .select("business_type_id")
+        .eq("id", data.user_id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Si el usuario tiene business_type_id, asignarlo; si no, asignar user_id
+      if (profile?.business_type_id) {
+        insertData.business_type_id = profile.business_type_id;
+      } else {
+        insertData.user_id = data.user_id;
+      }
+    }
+
+    const { data: newBrand, error } = await supabase
       .from("brand")
-      .insert({ name })
+      .insert(insertData)
       .select("*")
       .single();
     if (error) throw error;
-    return data;
+    return newBrand;
   }
 
   async updateBrand(id: number, data: UpdateBrandDto) {
