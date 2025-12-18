@@ -17,4 +17,16 @@ export class AuthController {
       HttpResponse.BadRequest(res, err);
     }
   }
+
+  async updateUserMetadata(req: Request, res: Response) {
+    try {
+      const result = await this.authService.updateUserMetadata({
+        user_id: req.body.user_id,
+        metadata: req.body.metadata,
+      });
+      HttpResponse.Ok(res, result);
+    } catch (err) {
+      HttpResponse.BadRequest(res, err);
+    }
+  }
 }
